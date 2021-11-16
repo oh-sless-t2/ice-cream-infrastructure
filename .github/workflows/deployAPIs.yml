@@ -38,9 +38,9 @@ jobs:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
             RG='${{ inputs.RG }}'
-            RESNAME='${{ inputs.AppNameSpeed }}'
+            APIMNAME='${{ inputs.APIMName }}'
             DEPNAME='Dep${{ github.run_number }}'
-            az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME
+            az deployment group validate -f apim-apis.bicep -g $RG -p apimName=$APIMNAME
           
       - name: Deploy Infrastructure
         id: deployInfra
@@ -49,20 +49,12 @@ jobs:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
             RG='${{ inputs.RG }}'
-            RESNAME='${{ inputs.AppNameSpeed }}'
+            APIMNAME='${{ inputs.APIMName }}'
             DEPNAME='Dep${{ github.run_number }}'
             
-            az deployment group create -f main.bicep -g $RG -p appName=$RESNAME --name $DEPNAME
+            az deployment group create -f apim-apis.bicep -g $RG -p apimName=$APIMNAME --name $DEPNAME
             
             DEPSTATUS=$(az deployment operation group list --resource-group $RG --name $DEPNAME) #--query "[?properties.provisioningState=='Failed']"
             echo $DEPSTATUS
             
-            #outputs
-            APPURL=$(az deployment group show -n $DEPNAME -g $RG --query "properties.outputs.appUrl.value" -o tsv)
-            echo "APPURL returned from az deployment = $APPURL"
-            echo "::set-output name=APPURL::$APPURL"
-            
-            APPNAME=$(az deployment group show -n $DEPNAME -g $RG --query "properties.outputs.appName.value" -o tsv)
-            echo "APPNAME returned from az deployment = $APPNAME"
-            echo "::set-output name=APPNAME::$APPNAME"
              
