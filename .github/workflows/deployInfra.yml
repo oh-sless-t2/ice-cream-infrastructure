@@ -24,7 +24,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
+      
+      - name: Job parameter check
+        run: |       
+          echo "RG is: ${{ github.event.inputs.RG }}"
+          
+          echo "AppNameSpeed is: ${{ github.event.inputs.AppNameSpeed }}"
+          echo "Deployment name is ${{ env.DEPNAME }}"
+          echo "Ref is ${{ github.ref }}"
+          echo "EventTrigger name is ${{github.event_name}}"
+          echo "AZCLIVERSION is ${{ env.AZCLIVERSION }}"
+          
+          echo "Inputs are ${{ tojson(github.event.inputs) }}"
       - name: Azure Login
         uses: Azure/login@v1
         with:
@@ -38,8 +49,8 @@ jobs:
         with:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
-            RG='${{ inputs.RG }}'
-            RESNAME='${{ inputs.AppNameSpeed }}'
+            RG="${{ github.event.inputs.RG }}"
+            RESNAME="${{ github.event.inputs.AppNameSpeed }}"
             DEPNAME='Dep${{ github.run_number }}'
             az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME
           
