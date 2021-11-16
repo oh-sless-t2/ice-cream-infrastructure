@@ -8,7 +8,7 @@ on:
         description: "Resource Group to deploy to"
         required: true
         default: "team2App-devenv"
-      APIMName:
+      apimname:
         description: "API Management Instance Name"
         required: true
         default: "apim-icecream"
@@ -32,7 +32,7 @@ jobs:
         run: |       
           echo "RG is: ${{ github.event.inputs.resourcegroup }}"
           
-          echo "APIMName is: ${{ github.events.inputs.APIMName }}"
+          echo "APIMName is: ${{ github.events.inputs.apimname }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "Ref is ${{ github.ref }}"
           echo "EventTrigger name is ${{github.event_name}}"
