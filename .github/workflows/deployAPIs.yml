@@ -7,10 +7,11 @@ on:
       ResourceGroup:
         description: 'Resource Group to deploy to'  
         default: 'team2App-devenv'
+        required: true
       APIMName:
         description: 'API Management Instance Name'  
         default: 'apim-icecream'
-        #required: true
+        required: true
 env:
   DEPNAME: "DepApi${{ github.run_number }}" #Deployment Name
   AZCLIVERSION: latest #2.30.0 #Pinning to a specific AZ CLI version
