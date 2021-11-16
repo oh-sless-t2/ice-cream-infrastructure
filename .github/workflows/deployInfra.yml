@@ -3,9 +3,12 @@
 name: Deploy Infra
 on:
   workflow_dispatch:
-
+    inputs:
+      RG:
+        description: 'Resource Group to deploy to'  
+        default: 'team2App-devenv'
 env:
-  RG: "team2App-devenv" #The resource group we're deploying to.
+  #RG: "team2App-devenv" #The resource group we're deploying to.
   #ParamFilePath: ".github/workflows_dep/AksDeploy-Basic.parameters.json" #Path to parameter file
   RESNAME: "Ratings" #Used in Azure Resource Naming, overrides the default in the parameter file
   DEPNAME: "Dep${{ github.run_number }}" #Deployment Name
@@ -30,7 +33,7 @@ jobs:
         with:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
-            RG='${{ env.RG }}'
+            RG='${{ inputs.RG }}'
             RESNAME='${{ env.RESNAME }}'
             DEPNAME='Dep${{ github.run_number }}'
             az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME
@@ -41,7 +44,7 @@ jobs:
         with:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
-            RG='${{ env.RG }}'
+            RG='${{ inputs.RG }}'
             RESNAME='${{ env.RESNAME }}'
             DEPNAME='Dep${{ github.run_number }}'
             
