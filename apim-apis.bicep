@@ -19,6 +19,7 @@ resource OhApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
     protocols: [
       'https'
     ]
+    subscriptionRequired: false
   }
 }
 
@@ -76,6 +77,7 @@ resource RatingsApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = 
     protocols: [
       'https'
     ]
+    subscriptionRequired: false
   }
 }
 
