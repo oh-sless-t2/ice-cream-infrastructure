@@ -33,7 +33,7 @@ jobs:
         run: |       
           echo "RG is: ${{ github.event.inputs.resourcegroup }}"
           
-          echo "APIMName is: ${{ github.events.inputs.apimname }}"
+          echo "APIMName is: ${{ github.event.inputs.apimname }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "Ref is ${{ github.ref }}"
           echo "EventTrigger name is ${{github.event_name}}"
@@ -56,8 +56,8 @@ jobs:
         with:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
-            RG='${{ github.events.inputs.ResourceGroup }}'
-            APIMNAME='${{ github.events.inputs.APIMName }}'
+            RG='${{ github.event.inputs.ResourceGroup }}'
+            APIMNAME='${{ github.event.inputs.APIMName }}'
             az deployment group validate -f apim-apis.bicep -g $RG -p apimName=$APIMNAME
           
       - name: Deploy Infrastructure
@@ -66,8 +66,8 @@ jobs:
         with:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
-            RG='${{ github.events.inputs.ResourceGroup }}'
-            APIMNAME='${{ github.events.inputs.APIMName }}'
+            RG='${{ github.event.inputs.ResourceGroup }}'
+            APIMNAME='${{ github.event.inputs.APIMName }}'
             
             az deployment group create -f apim-apis.bicep -g $RG -p apimName=$APIMNAME --name $DEPNAME
             
