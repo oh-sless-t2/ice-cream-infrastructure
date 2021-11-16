@@ -1,0 +1,68 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Deploy Infra
+on:
+  workflow_dispatch:
+    inputs:
+      RG:
+        description: 'Resource Group to deploy to'  
+        default: 'team2App-devenv'
+      APIMName:
+        description: 'API Management Instance Name'  
+        default: 'apim-icecream'
+        #required: true
+env:
+  #RG: "team2App-devenv" #The resource group we're deploying to.
+  #ParamFilePath: ".github/workflows_dep/AksDeploy-Basic.parameters.json" #Path to parameter file
+  #RESNAME: "Ratings" #Used in Azure Resource Naming, overrides the default in the parameter file
+  DEPNAME: "Dep${{ github.run_number }}" #Deployment Name
+  AZCLIVERSION: latest #2.30.0 #Pinning to a specific AZ CLI version
+
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: Azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+          environment: azurecloud
+          allow-no-subscriptions: false
+          
+      - name: Validate Infrastructure deployment
+        uses: Azure/cli@1.0.4
+        with:
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+            RG='${{ inputs.RG }}'
+            RESNAME='${{ inputs.AppNameSpeed }}'
+            DEPNAME='Dep${{ github.run_number }}'
+            az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME
+          
+      - name: Deploy Infrastructure
+        id: deployInfra
+        uses: Azure/cli@1.0.4
+        with:
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+            RG='${{ inputs.RG }}'
+            RESNAME='${{ inputs.AppNameSpeed }}'
+            DEPNAME='Dep${{ github.run_number }}'
+            
+            az deployment group create -f main.bicep -g $RG -p appName=$RESNAME --name $DEPNAME
+            
+            DEPSTATUS=$(az deployment operation group list --resource-group $RG --name $DEPNAME) #--query "[?properties.provisioningState=='Failed']"
+            echo $DEPSTATUS
+            
+            #outputs
+            APPURL=$(az deployment group show -n $DEPNAME -g $RG --query "properties.outputs.appUrl.value" -o tsv)
+            echo "APPURL returned from az deployment = $APPURL"
+            echo "::set-output name=APPURL::$APPURL"
+            
+            APPNAME=$(az deployment group show -n $DEPNAME -g $RG --query "properties.outputs.appName.value" -o tsv)
+            echo "APPNAME returned from az deployment = $APPNAME"
+            echo "::set-output name=APPNAME::$APPNAME"
+             
