@@ -22,19 +22,6 @@ resource OhApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
   }
 }
 
-resource RatingsApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
-  name: 'Ratings'
-  parent: apim
-  properties: {
-    path: 'ratings'
-    displayName: 'Ratings API'
-    serviceUrl: ratingsApiBaseUrl
-    protocols: [
-      'https'
-    ]
-  }
-}
-
 resource GetUsersMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
   name: 'GetUsers'
   parent: OhApi
@@ -53,7 +40,7 @@ resource GetUserMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-
     displayName: 'Get User'
     method: 'GET'
     urlTemplate: '/GetUser'
-    description: 'Get all of the Ice Cream Users'
+    description: 'Get an Ice Cream Users'
   }
 }
 
@@ -64,7 +51,7 @@ resource GetProductsMethod 'Microsoft.ApiManagement/service/apis/operations@2021
     displayName: 'Get Products'
     method: 'GET'
     urlTemplate: '/GetProducts'
-    description: 'Get all of the Ice Cream Users'
+    description: 'Get all of the Ice Cream Products'
   }
 }
 
@@ -75,11 +62,33 @@ resource GetProductMethod 'Microsoft.ApiManagement/service/apis/operations@2021-
     displayName: 'Get Product'
     method: 'GET'
     urlTemplate: '/GetProduct'
-    description: 'Get all of the Ice Cream Users'
+    description: 'Get an Ice Cream Products'
   }
 }
 
+resource RatingsApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
+  name: 'Ratings'
+  parent: apim
+  properties: {
+    path: 'ratings'
+    displayName: 'Ratings API'
+    serviceUrl: ratingsApiBaseUrl
+    protocols: [
+      'https'
+    ]
+  }
+}
 
+resource GetRatingsMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
+  name: 'GetRating'
+  parent: RatingsApi
+  properties: {
+    displayName: 'Get Ratings'
+    method: 'GET'
+    urlTemplate: '/GetRatings'
+    description: 'Get all of the ratings'
+  }
+}
 
 // resource apimProduct 'Microsoft.ApiManagement/service/products@2019-12-01' = {
 //   name: '${apim.name}/custom-product'
