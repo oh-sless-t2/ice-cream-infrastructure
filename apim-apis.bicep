@@ -3,6 +3,8 @@
 
 param apimName string
 
+param ratingsApiBaseUrl string = 'https://app-ratings-fi4a3nk4vlrka.azurewebsites.net/api'
+
 resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' existing = {
   name: apimName
 }
@@ -14,6 +16,19 @@ resource OhApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
     path: 'users'
     displayName: 'Users API'
     serviceUrl: 'https://serverlessohapi.azurewebsites.net/api/'
+    protocols: [
+      'https'
+    ]
+  }
+}
+
+resource RatingsApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
+  name: 'Ratings'
+  parent: apim
+  properties: {
+    path: 'ratings'
+    displayName: 'Ratings API'
+    serviceUrl: ratingsApiBaseUrl
     protocols: [
       'https'
     ]
