@@ -15,6 +15,12 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
   name: webAppName
   location: resourceGroup().location
   kind: 'functionapp'
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${fnAppUai.id}': {}
+    }
+  }
   properties: {
     httpsOnly: true
     serverFarmId: hostingPlan.id
@@ -51,6 +57,11 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
 }
 output appUrl string = functionApp.properties.defaultHostName
 output appName string = functionApp.name
+
+resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: 'id-${webAppName}'
+  location: resourceGroup().location
+}
 
 // resource webAppConfig 'Microsoft.Web/sites/config@2019-08-01' = { 
 //   parent: webApp
@@ -144,3 +155,11 @@ module apis 'apim-apis.bicep' = {
   }
 }
 
+module akv 'kv.bicep' = {
+  name: 'keyvault'
+  params: {
+    keyvaultName: 'kvicecream'
+    apimUaiName: apim.outputs.apimUaiName
+    fnAppUaiName: fnAppUai.name
+  }
+}

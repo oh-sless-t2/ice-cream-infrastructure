@@ -14,6 +14,9 @@ resource OhApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
     path: 'users'
     displayName: 'Users API'
     serviceUrl: 'https://serverlessohapi.azurewebsites.net/api/'
+    protocols: [
+      'https'
+    ]
   }
 }
 

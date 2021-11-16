@@ -33,7 +33,7 @@ param availabilityZones array = [
 param AppInsightsName string = ''
 
 var apiManagementServiceName_var = 'apim-${nameSeed}'
-var keyvaultName = 'kv${nameSeed}'
+
 
 resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
   name: apiManagementServiceName_var
@@ -68,30 +68,8 @@ resource apiUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = 
   name: 'id-${nameSeed}'
   location: location
 }
+output apimUaiName string = apiUai.name
 
-resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' =  {
-  name: keyvaultName
-  location: location
-  properties: {
-    sku: {
-      name: 'standard'
-      family: 'A'
-    }
-    tenantId: apiUai.properties.tenantId
-    accessPolicies: [
-      {
-        tenantId: apiUai.properties.tenantId
-        objectId: apiUai.properties.principalId
-        permissions: {
-          secrets: [
-            'get'
-          ]
-        }
-      }
-    ]
-    enableSoftDelete: true
-  }
-}
 
 resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!empty(AppInsightsName)) {
   name: AppInsightsName
