@@ -7,9 +7,49 @@ param databaseAccountId string = toLower('db-${appName}')
 @description('Name of the web app host plan')
 param hostingPlanName string = 'plan-${appName}'
 
+param restrictTrafficToJustAPIM bool = false
+
 //Making the name unique - if this fails, it's because the name is already taken (and you're really unlucky!)
 var webAppName = 'app-${appName}-${uniqueString(resourceGroup().id, appName)}'
 var storageAccountName = substring(toLower('stor${appName}${uniqueString(resourceGroup().id, appName)}'),0,23)
+
+
+var siteConfig = {
+  appSettings: [
+    {
+      'name': 'APPINSIGHTS_INSTRUMENTATIONKEY'
+      'value': AppInsights.properties.InstrumentationKey
+    }
+    {
+      name: 'AzureWebJobsStorage'
+      value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+    }
+    {
+      'name': 'FUNCTIONS_EXTENSION_VERSION'
+      'value': '~4'
+    }
+    {
+      'name': 'FUNCTIONS_WORKER_RUNTIME'
+      'value': 'dotnet'
+    }
+    {
+      name: 'COSMOS_CONNECTION_STRING'
+      value: cosmos.outputs.connstr
+    }
+    {
+      name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
+      value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+    }
+  ]
+  ipSecurityRestrictions: restrictTrafficToJustAPIM ? [
+    {
+      priority: 200
+      action: 'Allow'
+      name: 'API Management'
+      description: 'Isolates inbound traffic to just APIM'
+    }
+  ] : []
+}
 
 resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
   name: webAppName
@@ -25,38 +65,24 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
     httpsOnly: true
     serverFarmId: hostingPlan.id
     clientAffinityEnabled: true
-    siteConfig: {
-      appSettings: [
-        {
-          'name': 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          'value': AppInsights.properties.InstrumentationKey
-        }
-        {
-          name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name };EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
-        }
-        {
-          'name': 'FUNCTIONS_EXTENSION_VERSION'
-          'value': '~4'
-        }
-        {
-          'name': 'FUNCTIONS_WORKER_RUNTIME'
-          'value': 'dotnet'
-        }
-        {
-          name: 'COSMOS_CONNECTION_STRING'
-          value: cosmos.outputs.connstr
-        }
-        {
-          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
-        }
-      ]
-    }
+    siteConfig: siteConfig
   }
 }
 output appUrl string = functionApp.properties.defaultHostName
 output appName string = functionApp.name
+
+
+var deploymentSlotName = 'staging'
+resource slot 'Microsoft.Web/sites/slots@2021-02-01' = {
+  name: deploymentSlotName 
+  location: resourceGroup().location
+  properties:{
+    siteConfig: siteConfig
+    enabled: true
+    serverFarmId: hostingPlan.id
+  }
+  parent: functionApp
+}
 
 resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: 'id-${webAppName}'

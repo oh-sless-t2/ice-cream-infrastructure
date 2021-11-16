@@ -1,0 +1,625 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "15443163309961578861"
+    }
+  },
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "defaultValue": "ratings",
+      "metadata": {
+        "description": "The name seed for your application. Check outputs for the actual name and url"
+      }
+    },
+    "databaseAccountId": {
+      "type": "string",
+      "defaultValue": "[toLower(format('db-{0}', parameters('appName')))]",
+      "metadata": {
+        "description": "Name of the CosmosDb Account"
+      }
+    },
+    "hostingPlanName": {
+      "type": "string",
+      "defaultValue": "[format('plan-{0}', parameters('appName'))]",
+      "metadata": {
+        "description": "Name of the web app host plan"
+      }
+    },
+    "restrictTrafficToJustAPIM": {
+      "type": "bool",
+      "defaultValue": true
+    }
+  },
+  "functions": [],
+  "variables": {
+    "webAppName": "[format('app-{0}-{1}', parameters('appName'), uniqueString(resourceGroup().id, parameters('appName')))]",
+    "storageAccountName": "[substring(toLower(format('stor{0}{1}', parameters('appName'), uniqueString(resourceGroup().id, parameters('appName')))), 0, 23)]",
+    "deploymentSlotName": "staging"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('webAppName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "functionapp",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', variables('webAppName'))))]": {}
+        }
+      },
+      "properties": {
+        "httpsOnly": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+        "clientAffinityEnabled": true,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('webAppName'))).InstrumentationKey]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-06-01').keys[0].value)]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet"
+            },
+            {
+              "name": "COSMOS_CONNECTION_STRING",
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'cosmosDb'), '2020-06-01').outputs.connstr.value]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-06-01').keys[0].value)]"
+            }
+          ],
+          "ipSecurityRestrictions": "[if(parameters('restrictTrafficToJustAPIM'), createArray(createObject('priority', 200, 'action', 'Allow', 'name', 'API Management', 'description', 'Isolates inbound traffic to just APIM')), createArray())]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', variables('webAppName'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDb')]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', variables('webAppName')))]",
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/slots",
+      "apiVersion": "2021-02-01",
+      "name": "[format('{0}/{1}', variables('webAppName'), variables('deploymentSlotName'))]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('webAppName'))).InstrumentationKey]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-06-01').keys[0].value)]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet"
+            },
+            {
+              "name": "COSMOS_CONNECTION_STRING",
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'cosmosDb'), '2020-06-01').outputs.connstr.value]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-06-01').keys[0].value)]"
+            }
+          ],
+          "ipSecurityRestrictions": "[if(parameters('restrictTrafficToJustAPIM'), createArray(createObject('priority', 200, 'action', 'Allow', 'name', 'API Management', 'description', 'Isolates inbound traffic to just APIM')), createArray())]"
+        },
+        "enabled": true,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', variables('webAppName'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDb')]",
+        "[resourceId('Microsoft.Web/sites', variables('webAppName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2018-11-30",
+      "name": "[format('id-{0}', variables('webAppName'))]",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-06-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2021-01-15",
+      "name": "[parameters('hostingPlanName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('webAppName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "web",
+      "tags": {
+        "[format('hidden-link:{0}/providers/Microsoft.Web/sites/{1}', resourceGroup().id, variables('webAppName'))]": "Resource"
+      },
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "cosmosDb",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "databaseAccountId": {
+            "value": "[parameters('databaseAccountId')]"
+          },
+          "fnAppUaiName": {
+            "value": "[format('id-{0}', variables('webAppName'))]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1008.15138",
+              "templateHash": "1256509609776740193"
+            }
+          },
+          "parameters": {
+            "databaseAccountId": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the CosmosDb Account"
+              }
+            },
+            "databaseAccountLocation": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "databaseName": {
+              "type": "string",
+              "defaultValue": "icecream"
+            },
+            "collectionName": {
+              "type": "string",
+              "defaultValue": "ratings"
+            },
+            "partitionkey": {
+              "type": "string",
+              "defaultValue": "productId"
+            },
+            "fnAppUaiName": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "readWriteRoleDefinitionId": "[guid(parameters('databaseAccountId'), 'ReadWriteRole')]",
+            "readWriteRoleAppAssignmentId": "[guid(parameters('databaseAccountId'), 'ReadWriteRole', 'App')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts",
+              "apiVersion": "2021-06-15",
+              "name": "[parameters('databaseAccountId')]",
+              "kind": "GlobalDocumentDB",
+              "location": "[parameters('databaseAccountLocation')]",
+              "properties": {
+                "databaseAccountOfferType": "Standard",
+                "locations": [
+                  {
+                    "locationName": "[format('{0}', resourceGroup().location)]",
+                    "failoverPriority": 0,
+                    "isZoneRedundant": false
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+              "apiVersion": "2021-07-01-preview",
+              "name": "[format('{0}/{1}', parameters('databaseAccountId'), parameters('databaseName'))]",
+              "properties": {
+                "resource": {
+                  "id": "[parameters('databaseName')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountId'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+              "apiVersion": "2021-01-15",
+              "name": "[format('{0}/{1}/{2}', parameters('databaseAccountId'), parameters('databaseName'), parameters('collectionName'))]",
+              "properties": {
+                "resource": {
+                  "id": "[parameters('collectionName')]",
+                  "partitionKey": {
+                    "paths": [
+                      "[format('/{0}', parameters('partitionkey'))]"
+                    ],
+                    "kind": "Hash"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountId'))]",
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountId'), parameters('databaseName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions",
+              "apiVersion": "2021-03-01-preview",
+              "name": "[format('{0}/{1}', parameters('databaseAccountId'), variables('readWriteRoleDefinitionId'))]",
+              "properties": {
+                "assignableScopes": [
+                  "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountId'))]"
+                ],
+                "permissions": [
+                  {
+                    "dataActions": [
+                      "Microsoft.DocumentDB/databaseAccounts/readMetadata",
+                      "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*",
+                      "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*"
+                    ],
+                    "notDataActions": []
+                  }
+                ],
+                "roleName": "Reader Writer",
+                "type": "CustomRole"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountId'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+              "apiVersion": "2021-03-01-preview",
+              "name": "[format('{0}/{1}', parameters('databaseAccountId'), variables('readWriteRoleAppAssignmentId'))]",
+              "properties": {
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('fnAppUaiName')), '2018-11-30').principalId]",
+                "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('databaseAccountId'), variables('readWriteRoleDefinitionId'))]",
+                "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountId'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountId'))]",
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('databaseAccountId'), variables('readWriteRoleDefinitionId'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "databaseAccountId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('databaseAccountId'))]"
+            },
+            "accountId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('databaseAccountId'), parameters('databaseName'))]"
+            },
+            "connstr": {
+              "type": "string",
+              "value": "[first(listConnectionStrings(format('Microsoft.DocumentDb/databaseAccounts/{0}', parameters('databaseAccountId')), '2015-04-08').connectionStrings).connectionString]"
+            },
+            "accountName": {
+              "type": "string",
+              "value": "[parameters('databaseAccountId')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', variables('webAppName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "apim",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "nameSeed": {
+            "value": "icecream"
+          },
+          "AppInsightsName": {
+            "value": "[variables('webAppName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1008.15138",
+              "templateHash": "14099751574611886761"
+            }
+          },
+          "parameters": {
+            "nameSeed": {
+              "type": "string",
+              "minLength": 3,
+              "metadata": {
+                "description": "Used in the naming of Az resources"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region where the resources will be deployed"
+              }
+            },
+            "publisherName": {
+              "type": "string",
+              "defaultValue": "Gobyers",
+              "minLength": 1,
+              "metadata": {
+                "description": "The name of the owner of the service"
+              }
+            },
+            "sku": {
+              "type": "string",
+              "defaultValue": "Developer",
+              "allowedValues": [
+                "Developer",
+                "Premium"
+              ],
+              "metadata": {
+                "description": "The pricing tier of this API Management service"
+              }
+            },
+            "publisherEmail": {
+              "type": "string",
+              "defaultValue": "gdogg@microsoft.com",
+              "minLength": 1,
+              "metadata": {
+                "description": "The email address of the owner of the service"
+              }
+            },
+            "skuCount": {
+              "type": "int",
+              "defaultValue": 1,
+              "metadata": {
+                "description": "The instance size of this API Management service.This should be in multiple of zones getting deployed."
+              }
+            },
+            "availabilityZones": {
+              "type": "array",
+              "defaultValue": [
+                "1",
+                "2",
+                "3"
+              ],
+              "metadata": {
+                "description": "Zone numbers e.g. 1,2,3."
+              }
+            },
+            "AppInsightsName": {
+              "type": "string",
+              "defaultValue": ""
+            }
+          },
+          "functions": [],
+          "variables": {
+            "apiManagementServiceName_var": "[format('apim-{0}', parameters('nameSeed'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ApiManagement/service",
+              "apiVersion": "2021-01-01-preview",
+              "name": "[variables('apiManagementServiceName_var')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "[parameters('sku')]",
+                "capacity": "[parameters('skuCount')]"
+              },
+              "zones": "[if(or(equals(length(parameters('availabilityZones')), 0), equals(parameters('sku'), 'Developer')), json('null'), parameters('availabilityZones'))]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('nameSeed'))))]": {}
+                }
+              },
+              "properties": {
+                "publisherEmail": "[parameters('publisherEmail')]",
+                "publisherName": "[parameters('publisherName')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', parameters('nameSeed')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/policies",
+              "apiVersion": "2019-12-01",
+              "name": "[format('{0}/policy', variables('apiManagementServiceName_var'))]",
+              "properties": {
+                "format": "rawxml",
+                "value": "<policies><inbound /><backend><forward-request /></backend><outbound /><on-error /></policies>"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName_var'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2018-11-30",
+              "name": "[format('id-{0}', parameters('nameSeed'))]",
+              "location": "[parameters('location')]"
+            },
+            {
+              "type": "Microsoft.ApiManagement/service/loggers",
+              "apiVersion": "2019-12-01",
+              "name": "[format('{0}/{1}-logger', variables('apiManagementServiceName_var'), variables('apiManagementServiceName_var'))]",
+              "properties": {
+                "resourceId": "[resourceId('Microsoft.Insights/components', parameters('AppInsightsName'))]",
+                "loggerType": "applicationInsights",
+                "credentials": {
+                  "instrumentationKey": "[reference(resourceId('Microsoft.Insights/components', parameters('AppInsightsName')), '2020-02-02').InstrumentationKey]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementServiceName_var'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "ApimName": {
+              "type": "string",
+              "value": "[variables('apiManagementServiceName_var')]"
+            },
+            "apimUaiName": {
+              "type": "string",
+              "value": "[format('id-{0}', parameters('nameSeed'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', variables('webAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "keyvault",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "keyvaultName": {
+            "value": "kvicecream"
+          },
+          "apimUaiName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'apim'), '2020-06-01').outputs.apimUaiName.value]"
+          },
+          "fnAppUaiName": {
+            "value": "[format('id-{0}', variables('webAppName'))]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.1008.15138",
+              "templateHash": "2148156023381581329"
+            }
+          },
+          "parameters": {
+            "keyvaultName": {
+              "type": "string"
+            },
+            "apimUaiName": {
+              "type": "string"
+            },
+            "fnAppUaiName": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2019-09-01",
+              "name": "[parameters('keyvaultName')]",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "sku": {
+                  "name": "standard",
+                  "family": "A"
+                },
+                "tenantId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('apimUaiName')), '2018-11-30').tenantId]",
+                "accessPolicies": [
+                  {
+                    "tenantId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('apimUaiName')), '2018-11-30').tenantId]",
+                    "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('apimUaiName')), '2018-11-30').principalId]",
+                    "permissions": {
+                      "secrets": [
+                        "get"
+                      ]
+                    }
+                  },
+                  {
+                    "tenantId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('fnAppUaiName')), '2018-11-30').tenantId]",
+                    "objectId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('fnAppUaiName')), '2018-11-30').principalId]",
+                    "permissions": {
+                      "secrets": [
+                        "get"
+                      ]
+                    }
+                  }
+                ],
+                "enableSoftDelete": true
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'apim')]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', variables('webAppName')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "appUrl": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', variables('webAppName'))).defaultHostName]"
+    },
+    "appName": {
+      "type": "string",
+      "value": "[variables('webAppName')]"
+    }
+  }
+}

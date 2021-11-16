@@ -1,0 +1,121 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1008.15138",
+      "templateHash": "4000699527422407899"
+    }
+  },
+  "parameters": {
+    "apimName": {
+      "type": "string"
+    },
+    "ratingsApiBaseUrl": {
+      "type": "string",
+      "defaultValue": "https://app-ratings-fi4a3nk4vlrka.azurewebsites.net/api"
+    }
+  },
+  "functions": [],
+  "resources": [
+    {
+      "type": "Microsoft.ApiManagement/service/apis",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[format('{0}/{1}', parameters('apimName'), 'GetUsers')]",
+      "properties": {
+        "path": "users",
+        "displayName": "Users API",
+        "serviceUrl": "https://serverlessohapi.azurewebsites.net/api/",
+        "protocols": [
+          "https"
+        ],
+        "subscriptionRequired": false
+      }
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('apimName'), 'GetUsers', 'GetUsers')]",
+      "properties": {
+        "displayName": "Get Users",
+        "method": "GET",
+        "urlTemplate": "/GetUsers",
+        "description": "Get all of the Ice Cream Users"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'GetUsers')]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('apimName'), 'GetUsers', 'GetUser')]",
+      "properties": {
+        "displayName": "Get User",
+        "method": "GET",
+        "urlTemplate": "/GetUser",
+        "description": "Get an Ice Cream Users"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'GetUsers')]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('apimName'), 'GetUsers', 'GetProducts')]",
+      "properties": {
+        "displayName": "Get Products",
+        "method": "GET",
+        "urlTemplate": "/GetProducts",
+        "description": "Get all of the Ice Cream Products"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'GetUsers')]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('apimName'), 'GetUsers', 'GetProduct')]",
+      "properties": {
+        "displayName": "Get Product",
+        "method": "GET",
+        "urlTemplate": "/GetProduct",
+        "description": "Get an Ice Cream Products"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'GetUsers')]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[format('{0}/{1}', parameters('apimName'), 'Ratings')]",
+      "properties": {
+        "path": "ratings",
+        "displayName": "Ratings API",
+        "serviceUrl": "[parameters('ratingsApiBaseUrl')]",
+        "protocols": [
+          "https"
+        ],
+        "subscriptionRequired": false
+      }
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/apis/operations",
+      "apiVersion": "2021-04-01-preview",
+      "name": "[format('{0}/{1}/{2}', parameters('apimName'), 'Ratings', 'GetRating')]",
+      "properties": {
+        "displayName": "Get Ratings",
+        "method": "GET",
+        "urlTemplate": "/GetRatings",
+        "description": "Get all of the ratings"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'Ratings')]"
+      ]
+    }
+  ]
+}
