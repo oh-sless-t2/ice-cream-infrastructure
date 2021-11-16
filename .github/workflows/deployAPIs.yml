@@ -1,0 +1,70 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Deploy APIM Api definitions
+on:
+  workflow_dispatch:
+    inputs:
+      resourcegroup:
+        description: "Resource Group to deploy to"
+        required: true
+        default: "team2App-devenv"
+        
+      apimname:
+        description: "API Management Instance Name"
+        required: true
+        default: "apim-icecream"
+        
+env:
+  DEPNAME: "DepApi${{ github.run_number }}" #Deployment Name
+  AZCLIVERSION: latest #2.30.0 #Pinning to a specific AZ CLI version
+
+jobs:
+  DeployAPIs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Job parameter check
+        run: |       
+          echo "RG is: ${{ github.event.inputs.resourcegroup }}"
+          
+          echo "APIMName is: ${{ github.event.inputs.apimname }}"
+          echo "Deployment name is ${{ env.DEPNAME }}"
+          echo "Ref is ${{ github.ref }}"
+          echo "EventTrigger name is ${{github.event_name}}"
+          echo "AZCLIVERSION is ${{ env.AZCLIVERSION }}"
+          
+          echo "Inputs are ${{ tojson(github.event.inputs) }}"
+          
+      - name: Azure Login
+        uses: Azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true
+          environment: azurecloud
+          allow-no-subscriptions: false
+          
+      - name: Validate Infrastructure deployment
+        uses: Azure/cli@1.0.4
+        with:
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+            RG='${{ github.event.inputs.ResourceGroup }}'
+            APIMNAME='${{ github.event.inputs.APIMName }}'
+            az deployment group validate -f apim-apis.bicep -g $RG -p apimName=$APIMNAME
+          
+      - name: Deploy Infrastructure
+        id: deployInfra
+        uses: Azure/cli@1.0.4
+        with:
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+            RG='${{ github.event.inputs.ResourceGroup }}'
+            APIMNAME='${{ github.event.inputs.APIMName }}'
+            
+            az deployment group create -f apim-apis.bicep -g $RG -p apimName=$APIMNAME --name $DEPNAME
+            
+            DEPSTATUS=$(az deployment operation group list --resource-group $RG --name $DEPNAME) #--query "[?properties.provisioningState=='Failed']"
+            echo $DEPSTATUS
+            
+             
