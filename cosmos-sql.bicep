@@ -36,6 +36,21 @@ resource cosmosDbDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@20
   }
 }
 
+resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-01-15' = {
+  parent: cosmosDbDatabase
+  name: collectionName
+  properties: {
+    resource: {
+      id: collectionName
+      partitionKey: {
+        paths: [
+          '/productId'
+        ]
+        kind: 'Hash'
+      }
+    }
+  }
+}
 
 output accountId string = cosmosDbDatabase.id
 output connstr string = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${databaseAccountId}', '2015-04-08').connectionStrings).connectionString
