@@ -8,6 +8,7 @@ on:
         description: "Resource Group to deploy to"
         required: true
         default: "team2App-devenv"
+        
       apimname:
         description: "API Management Instance Name"
         required: true
