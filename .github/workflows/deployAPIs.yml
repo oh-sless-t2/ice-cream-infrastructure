@@ -5,12 +5,12 @@ on:
   workflow_dispatch:
     inputs:
       ResourceGroup:
-        description: 'Resource Group to deploy to'  
-        default: 'team2App-devenv'
+        description: "Resource Group to deploy to"
+        default: "team2App-devenv"
         required: true
       APIMName:
-        description: 'API Management Instance Name'  
-        default: 'apim-icecream'
+        description: "API Management Instance Name"
+        default: "apim-icecream"
         required: true
       name:
         description: "name"
