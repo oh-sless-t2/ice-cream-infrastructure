@@ -137,6 +137,7 @@ module cosmos 'cosmos-sql.bicep' = {
   name: 'cosmosDb'
   params: {
     databaseAccountId: databaseAccountId
+    fnAppUaiName: fnAppUai.name
   }
 }
 

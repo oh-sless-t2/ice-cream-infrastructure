@@ -10,6 +10,12 @@ param databaseName string = 'icecream'
 param collectionName string = 'ratings'
 param partitionkey string= 'productId'
 
+param fnAppUaiName string
+
+resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
+  name: fnAppUaiName
+}
+
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-06-15' = {
   kind: 'GlobalDocumentDB'
   name: databaseAccountId
@@ -55,3 +61,37 @@ resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/container
 
 output accountId string = cosmosDbDatabase.id
 output connstr string = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${databaseAccountId}', '2015-04-08').connectionStrings).connectionString
+output accountName string = cosmosDbAccount.name
+
+var readWriteRoleDefinitionId = guid(cosmosDbAccount.name, 'ReadWriteRole')
+resource cosmosReadWriteRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-03-01-preview' = {
+  name: readWriteRoleDefinitionId
+  parent: cosmosDbAccount
+  properties: {
+    assignableScopes: [
+      cosmosDbAccount.id
+    ]
+    permissions: [
+      {
+        dataActions: [
+          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
+          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
+          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
+        ]
+        notDataActions: []
+      }
+    ]
+    roleName: 'Reader Writer'
+    type: 'CustomRole'
+  }
+}
+
+var readWriteRoleAppAssignmentId = guid(cosmosDbAccount.name, 'ReadWriteRole', 'App')
+resource cosmosReadWriteAppAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2021-03-01-preview' = {
+  name: '${cosmosDbAccount.name}/${readWriteRoleAppAssignmentId}'
+  properties: {
+    principalId: reference(fnAppUai.id, '2016-08-01', 'Full').identity.principalId
+    roleDefinitionId: cosmosReadWriteRoleDefinition.id
+    scope: cosmosDbAccount.id
+  }
+}
