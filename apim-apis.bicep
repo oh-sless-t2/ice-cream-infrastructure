@@ -1,4 +1,5 @@
 //REF: https://www.jeanpaulsmit.com/2020/12/bicep-deploy-apim/
+//REF: https://dibranmulder.github.io/2018/12/19/Azure-API-Management-ARM-Cheatsheet/
 
 param apimName string
 
@@ -6,7 +7,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' existing = {
   name: apimName
 }
 
-resource UserApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
+resource OhApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
   name: 'GetUsers'
   parent: apim
   properties: {
@@ -16,9 +17,9 @@ resource UserApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
   }
 }
 
-resource GetUsersAPI 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
+resource GetUsersMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
   name: 'GetUsers'
-  parent: UserApi
+  parent: OhApi
   properties: {
     displayName: 'Get Users'
     method: 'GET'
@@ -26,6 +27,40 @@ resource GetUsersAPI 'Microsoft.ApiManagement/service/apis/operations@2021-04-01
     description: 'Get all of the Ice Cream Users'
   }
 }
+
+resource GetUserMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
+  name: 'GetUser'
+  parent: OhApi
+  properties: {
+    displayName: 'Get User'
+    method: 'GET'
+    urlTemplate: '/GetUser'
+    description: 'Get all of the Ice Cream Users'
+  }
+}
+
+resource GetProductsMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
+  name: 'GetProducts'
+  parent: OhApi
+  properties: {
+    displayName: 'Get Products'
+    method: 'GET'
+    urlTemplate: '/GetProducts'
+    description: 'Get all of the Ice Cream Users'
+  }
+}
+
+resource GetProductMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
+  name: 'GetProduct'
+  parent: OhApi
+  properties: {
+    displayName: 'Get Product'
+    method: 'GET'
+    urlTemplate: '/GetProduct'
+    description: 'Get all of the Ice Cream Users'
+  }
+}
+
 
 
 // resource apimProduct 'Microsoft.ApiManagement/service/products@2019-12-01' = {
