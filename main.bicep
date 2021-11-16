@@ -148,12 +148,12 @@ module apim 'apim.bicep' = {
   }
 }
 
-module apis 'apim-apis.bicep' = {
-  name: 'apim-apis'
-  params: {
-    apimName: apim.outputs.ApimName
-  }
-}
+// module apis 'apim-apis.bicep' = {
+//   name: 'apim-apis'
+//   params: {
+//     apimName: apim.outputs.ApimName
+//   }
+// }
 
 module akv 'kv.bicep' = {
   name: 'keyvault'
