@@ -133,5 +133,14 @@ module apim 'apim.bicep' = {
   name: 'apim'
   params: {
     nameSeed: 'icecream'
+    AppInsightsName: AppInsights.name
   }
 }
+
+module apis 'apim-apis.bicep' = {
+  name: 'apim-apis'
+  params: {
+    apimName: apim.outputs.ApimName
+  }
+}
+

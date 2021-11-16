@@ -30,6 +30,8 @@ param availabilityZones array = [
   '3'
 ]
 
+param AppInsightsName string = ''
+
 var apiManagementServiceName_var = 'apim-${nameSeed}'
 var keyvaultName = 'kv${nameSeed}'
 
@@ -53,6 +55,14 @@ resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
   }
 }
 output ApimName string = apim.name
+
+resource apimPolicy 'Microsoft.ApiManagement/service/policies@2019-12-01' = {
+  name: '${apim.name}/policy'
+  properties:{
+    format: 'rawxml'
+    value: '<policies><inbound /><backend><forward-request /></backend><outbound /><on-error /></policies>'
+  }
+}
 
 resource apiUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: 'id-${nameSeed}'
@@ -80,5 +90,21 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' =  {
       }
     ]
     enableSoftDelete: true
+  }
+}
+
+resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!empty(AppInsightsName)) {
+  name: AppInsightsName
+}
+
+// Create Logger and link logger
+resource apimLogger 'Microsoft.ApiManagement/service/loggers@2019-12-01' = {
+  name: '${apim.name}/${apim.name}-logger'
+  properties:{
+    resourceId: AppInsights.id
+    loggerType: 'applicationInsights'
+    credentials:{
+      instrumentationKey: AppInsights.properties.InstrumentationKey
+    }
   }
 }
