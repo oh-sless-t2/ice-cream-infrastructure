@@ -5,12 +5,13 @@ on:
   workflow_dispatch:
     inputs:
       RG:
-        description: 'Resource Group to deploy to'  
-        default: 'team2App-devenv'
+        description: "Resource Group to deploy to"
+        default: "team2App-devenv"
+        required: true
       AppNameSpeed:
-        description: 'App Name Seed'  
-        default: 'Ratings'
-        #required: true
+        description: "App Name Seed"
+        default: "Ratings"
+        required: true
 env:
   #RG: "team2App-devenv" #The resource group we're deploying to.
   #ParamFilePath: ".github/workflows_dep/AksDeploy-Basic.parameters.json" #Path to parameter file
