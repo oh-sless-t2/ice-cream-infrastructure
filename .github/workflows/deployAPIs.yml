@@ -14,11 +14,6 @@ on:
         required: true
         default: "apim-icecream"
         
-      name:
-        description: "name"
-        required: true
-        default: "world"
-        
 env:
   DEPNAME: "DepApi${{ github.run_number }}" #Deployment Name
   AZCLIVERSION: latest #2.30.0 #Pinning to a specific AZ CLI version
@@ -40,8 +35,6 @@ jobs:
           echo "AZCLIVERSION is ${{ env.AZCLIVERSION }}"
           
           echo "Inputs are ${{ tojson(github.event.inputs) }}"
-          
-          echo "Hello ${{ github.event.inputs.name }}!"
           
       - name: Azure Login
         uses: Azure/login@v1
