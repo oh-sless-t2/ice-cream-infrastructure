@@ -4,14 +4,15 @@ name: Deploy APIM Api definitions
 on:
   workflow_dispatch:
     inputs:
-      ResourceGroup:
+      resourcegroup:
         description: "Resource Group to deploy to"
-        default: "team2App-devenv"
         required: true
+        default: "team2App-devenv"
       APIMName:
         description: "API Management Instance Name"
-        default: "apim-icecream"
         required: true
+        default: "apim-icecream"
+        
       name:
         description: "name"
         required: true
@@ -29,8 +30,7 @@ jobs:
       
       - name: Job parameter check
         run: |       
-          RG='${{ github.events.inputs.ResourceGroup }}'
-          echo "RG is: $RG"
+          echo "RG is: ${{ github.event.inputs.resourcegroup }}"
           
           echo "APIMName is: ${{ github.events.inputs.APIMName }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
@@ -38,7 +38,7 @@ jobs:
           echo "EventTrigger name is ${{github.event_name}}"
           echo "AZCLIVERSION is ${{ env.AZCLIVERSION }}"
           
-          echo "Inputs are ${{ tojson(github.events.inputs) }}"
+          echo "Inputs are ${{ tojson(github.event.inputs) }}"
           
           echo "Hello ${{ github.event.inputs.name }}!"
           
