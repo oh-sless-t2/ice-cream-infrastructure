@@ -53,7 +53,7 @@ jobs:
           inlineScript: |
             RG="${{ github.event.inputs.RG }}"
             RESNAME="${{ github.event.inputs.AppNameSpeed }}"
-            DEPNAME='Dep${{ github.run_number }}'
+
             az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME
           
       - name: Deploy Infrastructure
@@ -62,9 +62,8 @@ jobs:
         with:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
-            RG='${{ inputs.RG }}'
-            RESNAME='${{ inputs.AppNameSpeed }}'
-            DEPNAME='Dep${{ github.run_number }}'
+            RG="${{ github.event.inputs.RG }}"
+            RESNAME="${{ github.event.inputs.AppNameSpeed }}"
             
             az deployment group create -f main.bicep -g $RG -p appName=$RESNAME --name $DEPNAME
             
