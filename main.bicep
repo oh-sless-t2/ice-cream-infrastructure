@@ -128,3 +128,10 @@ module cosmos 'cosmos-sql.bicep' = {
     databaseAccountId: databaseAccountId
   }
 }
+
+module apim 'apim.bicep' = {
+  name: 'apim'
+  params: {
+    nameSeed: 'icecream'
+  }
+}
