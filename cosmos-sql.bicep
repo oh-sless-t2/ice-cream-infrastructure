@@ -8,6 +8,7 @@ param databaseAccountLocation string =resourceGroup().location
 
 param databaseName string = 'icecream'
 param collectionName string = 'ratings'
+param partitionkey string= 'productId'
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-06-15' = {
   kind: 'GlobalDocumentDB'
@@ -44,7 +45,7 @@ resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/container
       id: collectionName
       partitionKey: {
         paths: [
-          '/productId'
+          '/${partitionkey}'
         ]
         kind: 'Hash'
       }
