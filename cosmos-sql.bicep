@@ -86,11 +86,12 @@ resource cosmosReadWriteRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sq
   }
 }
 
+//REF: https://joonasw.net/view/access-data-in-cosmos-db-with-managed-identities
 var readWriteRoleAppAssignmentId = guid(cosmosDbAccount.name, 'ReadWriteRole', 'App')
 resource cosmosReadWriteAppAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2021-03-01-preview' = {
   name: '${cosmosDbAccount.name}/${readWriteRoleAppAssignmentId}'
   properties: {
-    principalId: reference(fnAppUai.id, '2016-08-01', 'Full').identity.principalId
+    principalId: fnAppUai.properties.principalId
     roleDefinitionId: cosmosReadWriteRoleDefinition.id
     scope: cosmosDbAccount.id
   }
