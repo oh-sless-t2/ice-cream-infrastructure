@@ -4,7 +4,7 @@ name: Deploy APIM Api definitions
 on:
   workflow_dispatch:
     inputs:
-      RG:
+      ResourceGroup:
         description: 'Resource Group to deploy to'  
         default: 'team2App-devenv'
       APIMName:
@@ -12,10 +12,7 @@ on:
         default: 'apim-icecream'
         #required: true
 env:
-  #RG: "team2App-devenv" #The resource group we're deploying to.
-  #ParamFilePath: ".github/workflows_dep/AksDeploy-Basic.parameters.json" #Path to parameter file
-  #RESNAME: "Ratings" #Used in Azure Resource Naming, overrides the default in the parameter file
-  DEPNAME: "Dep${{ github.run_number }}" #Deployment Name
+  DEPNAME: "DepApi${{ github.run_number }}" #Deployment Name
   AZCLIVERSION: latest #2.30.0 #Pinning to a specific AZ CLI version
 
 jobs:
@@ -37,9 +34,8 @@ jobs:
         with:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
-            RG='${{ inputs.RG }}'
+            RG='${{ inputs.ResourceGroup }}'
             APIMNAME='${{ inputs.APIMName }}'
-            DEPNAME='Dep${{ github.run_number }}'
             az deployment group validate -f apim-apis.bicep -g $RG -p apimName=$APIMNAME
           
       - name: Deploy Infrastructure
@@ -48,9 +44,8 @@ jobs:
         with:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
-            RG='${{ inputs.RG }}'
+            RG='${{ inputs.ResourceGroup }}'
             APIMNAME='${{ inputs.APIMName }}'
-            DEPNAME='Dep${{ github.run_number }}'
             
             az deployment group create -f apim-apis.bicep -g $RG -p apimName=$APIMNAME --name $DEPNAME
             
