@@ -74,19 +74,19 @@ resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWeb
     Enabled:true
     Locations: [
       {
-        Id: 'northeurope'
+        Id: 'emea-nl-ams-azr'
       }
       {
-        Id: 'westeurope'
+        Id: 'emea-se-sto-edge'
       }
       {
-        Id: 'uksouth'
+        Id: 'emea-ru-msa-edge'
       }
       {
-        Id: 'westus'
+        Id: 'emea-gb-db3-azr'
       }
       {
-        Id: 'australiaeast'
+        Id: 'emea-ch-zrh-edge'
       }
     ]
   }
