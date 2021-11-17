@@ -69,7 +69,7 @@ jobs:
           echo "Inputs are ${{ tojson(github.event.inputs) }}"
           
       - name: Azure Login
-        if: ${{ github.event.inputs.runner }} == ubuntu-latest
+        if: ${{ github.event.inputs.runner }} != open-hack
         uses: Azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
