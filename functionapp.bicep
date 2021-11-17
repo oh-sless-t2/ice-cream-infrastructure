@@ -59,7 +59,7 @@ var siteConfig = {
   ] : []
 }
 
-resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
+resource functionApp 'Microsoft.Web/sites@2021-02-01' = {
   name: webAppName
   location: resourceGroup().location
   kind: 'functionapp'
@@ -74,6 +74,7 @@ resource functionApp 'Microsoft.Web/sites@2020-06-01' = {
     serverFarmId: hostingPlan.id
     clientAffinityEnabled: true
     siteConfig: siteConfig
+    keyVaultReferenceIdentity: fnAppUai.id
   }
 }
 output appUrl string = functionApp.properties.defaultHostName
