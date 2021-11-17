@@ -24,6 +24,15 @@ on:
         - apim-icecreamgreen-nxwhongiagiiu
         - apim-icecreamblue-3plwdf5dpxexw
         
+      ratingsapiurl:
+        description: "Ratings Api Url"
+        default: "https://app-ratings-fi4a3nk4vlrka.azurewebsites.net/api"
+        required: true
+        type: choice
+        options: 
+        - "https://app-ratings-vsabv73meajog.azurewebsites.net/api"
+        - "https://app-ratings-fi4a3nk4vlrka.azurewebsites.net/api"
+        
 env:
   DEPNAME: "DepApi${{ github.run_number }}" #Deployment Name
   AZCLIVERSION: latest #2.30.0 #Pinning to a specific AZ CLI version
