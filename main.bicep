@@ -147,6 +147,21 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
   properties: {
     Application_Type: 'web'
+    WorkspaceResourceId: log.id
+    IngestionMode: 'LogAnalytics'
+  }
+}
+
+@description('The Log Analytics retention period')
+param retentionInDays int = 30
+
+var log_name = 'log-${resNameSeed}'
+
+resource log 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
+  name: log_name
+  location: resourceGroup().location
+  properties: {
+    retentionInDays: retentionInDays
   }
 }
 
