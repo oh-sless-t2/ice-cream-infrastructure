@@ -15,7 +15,7 @@ on:
         required: true
         
       ApimNameSeed:
-        description: "App Name Seed"
+        description: "APIM Name Seed"
         default: "icecream"
         required: true
         
