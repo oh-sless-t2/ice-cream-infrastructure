@@ -59,6 +59,7 @@ jobs:
           
           echo "ApiName is: ${{ github.event.inputs.ApiName }}"
           echo "ResNameSeed is: ${{ github.event.inputs.ResNameSeed }}"
+          echo "Runner is ${{ github.event.inputs.runner }}"
           echo "WebTrafficRestrict is: ${{ github.event.inputs.WebTrafficRestrict }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "Ref is ${{ github.ref }}"
@@ -68,12 +69,18 @@ jobs:
           echo "Inputs are ${{ tojson(github.event.inputs) }}"
           
       - name: Azure Login
+        if: ${{ github.event.inputs.runner }} == ubuntu-latest
         uses: Azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           enable-AzPSSession: true
           environment: azurecloud
           allow-no-subscriptions: false
+          
+      - name: Azure Login MSI
+        if: ${{ github.event.inputs.runner }} == open-hack
+        run: |
+          az login --identity
           
       - name: Validate Infrastructure deployment
         uses: Azure/cli@1.0.4
