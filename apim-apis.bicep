@@ -87,8 +87,15 @@ resource GetRatingsMethod 'Microsoft.ApiManagement/service/apis/operations@2021-
   properties: {
     displayName: 'Get Ratings'
     method: 'GET'
-    urlTemplate: '/GetRatings'
+    urlTemplate: '/GetRatings/{userid}'
     description: 'Get all of the ratings'
+    templateParameters: [
+      {
+        name: 'userid'
+        defaultValue: 'cc20a6fb-a91f-4192-874d-132493685376'
+        type: ''
+      }
+    ]
   }
 }
 
