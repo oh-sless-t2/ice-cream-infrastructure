@@ -12,6 +12,7 @@ on:
         options: 
         - team2App-devenv
         - team2App-bluedevenv
+        - team2App-greendevenv
         
       ApiName:
         description: "Api Name"
