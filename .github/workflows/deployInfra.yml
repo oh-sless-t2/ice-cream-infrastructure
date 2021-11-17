@@ -48,10 +48,10 @@ env:
 
 jobs:
   Deploy:
+    if: github.event.inputs.runner != 'open-hack'
     concurrency: ci-${{ github.event.inputs.RG }}
     runs-on: ${{ github.event.inputs.runner }} #self-hosted #ubuntu-latest
-    #env: 
-    #  isselfhosted:  ${{ github.event.inputs.runner == "open-hack" }}
+
     steps:
       - uses: actions/checkout@v2
       
@@ -62,7 +62,6 @@ jobs:
           echo "ApiName is: ${{ github.event.inputs.ApiName }}"
           echo "ResNameSeed is: ${{ github.event.inputs.ResNameSeed }}"
           echo "Runner is ${{ github.event.inputs.runner }}"
-          echo "Runner will use self-hosted : ${{ env.isselfhosted }}"
           echo "WebTrafficRestrict is: ${{ github.event.inputs.WebTrafficRestrict }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "Ref is ${{ github.ref }}"
@@ -72,19 +71,12 @@ jobs:
           echo "Inputs are ${{ tojson(github.event.inputs) }}"
           
       - name: Azure Login
-        #if: ${{ github.event.inputs.runner }} != "open-hack"
-        if: github.event.inputs.runner != 'open-hack'
         uses: Azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           enable-AzPSSession: true
           environment: azurecloud
           allow-no-subscriptions: false
-          
-      - name: Azure Login MSI
-        if: github.event.inputs.runner == 'open-hack'
-        run: |
-          az login --identity
           
       - name: Validate Infrastructure deployment
         uses: Azure/cli@1.0.4
@@ -122,4 +114,67 @@ jobs:
             APPNAME=$(az deployment group show -n $DEPNAME -g $RG --query "properties.outputs.appName.value" -o tsv)
             echo "APPNAME returned from az deployment = $APPNAME"
             echo "::set-output name=APPNAME::$APPNAME"
+             
+  DeploySelfHosted:
+    if: github.event.inputs.runner == 'open-hack'
+    concurrency: ci-${{ github.event.inputs.RG }}
+    runs-on: ${{ github.event.inputs.runner }} #self-hosted #ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Job parameter check
+        run: |       
+          echo "RG is: ${{ github.event.inputs.RG }}"
+          
+          echo "ApiName is: ${{ github.event.inputs.ApiName }}"
+          echo "ResNameSeed is: ${{ github.event.inputs.ResNameSeed }}"
+          echo "Runner is ${{ github.event.inputs.runner }}"
+          echo "WebTrafficRestrict is: ${{ github.event.inputs.WebTrafficRestrict }}"
+          echo "Deployment name is ${{ env.DEPNAME }}"
+          echo "Ref is ${{ github.ref }}"
+          echo "EventTrigger name is ${{github.event_name}}"
+          echo "AZCLIVERSION is ${{ env.AZCLIVERSION }}"
+          
+          echo "Inputs are ${{ tojson(github.event.inputs) }}"
+          
+      - name: Azure Login MSI
+        if: github.event.inputs.runner == 'open-hack'
+        run: |
+          az login --identity
+          
+      - name: Validate Infrastructure deployment
+        run: |
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+          RG="${{ github.event.inputs.RG }}"
+          RESNAME="${{ github.event.inputs.ApiName }}"
+          ResNameSeed="${{ github.event.inputs.ResNameSeed }}"
+          WebTrafficRestrict="${{ github.event.inputs.WebTrafficRestrict }}"
+
+          az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME resNameSeed=$ResNameSeed restrictTrafficToJustAPIM=$WebTrafficRestrict
+
+      - name: Deploy Infrastructure
+        id: deployInfra
+        run: |
+          azcliversion: ${{ env.AZCLIVERSION }}
+          inlineScript: |
+          RG="${{ github.event.inputs.RG }}"
+          RESNAME="${{ github.event.inputs.ApiName }}"
+          ResNameSeed="${{ github.event.inputs.ResNameSeed }}"
+          WebTrafficRestrict="${{ github.event.inputs.WebTrafficRestrict }}"
+
+          az deployment group create -f main.bicep -g $RG -p appName=$RESNAME  resNameSeed=$ResNameSeed restrictTrafficToJustAPIM=$WebTrafficRestrict --name $DEPNAME 
+
+          DEPSTATUS=$(az deployment operation group list --resource-group $RG --name $DEPNAME) #--query "[?properties.provisioningState=='Failed']"
+          echo $DEPSTATUS
+
+          #outputs
+          APPURL=$(az deployment group show -n $DEPNAME -g $RG --query "properties.outputs.appUrl.value" -o tsv)
+          echo "APPURL returned from az deployment = $APPURL"
+          echo "::set-output name=APPURL::$APPURL"
+
+          APPNAME=$(az deployment group show -n $DEPNAME -g $RG --query "properties.outputs.appName.value" -o tsv)
+          echo "APPNAME returned from az deployment = $APPNAME"
+          echo "::set-output name=APPNAME::$APPNAME"
              
