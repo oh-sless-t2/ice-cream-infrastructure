@@ -120,7 +120,7 @@ resource GetRatingMethod 'Microsoft.ApiManagement/service/apis/operations@2021-0
   properties: {
     displayName: 'Get Rating'
     method: 'GET'
-    urlTemplate: '/GetRating/{RatingId}'
+    urlTemplate: '/GetRating/{ratingsId}'
     description: 'Get all of the ratings'
     templateParameters: [
       {
