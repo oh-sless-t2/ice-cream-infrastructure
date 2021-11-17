@@ -82,6 +82,8 @@ module akv 'kv.bicep' = {
     nameSeed: 'kvicecream'
     apimUaiName:  apim.outputs.apimUaiName
     fnAppUaiName: fnAppUai.name
+    secretName: 'RatingsCosmosDbConnectionString'
+    secretValue: cosmos.outputs.connstr
   }
 }
 

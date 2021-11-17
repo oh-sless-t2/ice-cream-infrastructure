@@ -5,6 +5,10 @@ param nameSeed string
 param apimUaiName string
 param fnAppUaiName string
 
+param secretName string = 'AppSecret'
+param secretValue string = 'SecretSquirrel'
+
+
 var kvName = substring(replace('kv-${nameSeed}-${uniqueString(resourceGroup().id, nameSeed)}','-',''),0,23)
 
 resource apiUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
@@ -45,5 +49,13 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' =  {
       }
     ]
     enableSoftDelete: true
+  }
+}
+
+resource secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: secretName
+  parent: keyVault
+  properties: {
+    value: secretValue
   }
 }
