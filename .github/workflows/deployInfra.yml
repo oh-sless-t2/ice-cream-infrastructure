@@ -50,6 +50,8 @@ jobs:
   Deploy:
     concurrency: ci-${{ github.event.inputs.RG }}
     runs-on: ${{ github.event.inputs.runner }} #self-hosted #ubuntu-latest
+    env: 
+      isselfhosted: ${{ github.event.inputs.runner == open-hack }}
     steps:
       - uses: actions/checkout@v2
       
@@ -60,6 +62,7 @@ jobs:
           echo "ApiName is: ${{ github.event.inputs.ApiName }}"
           echo "ResNameSeed is: ${{ github.event.inputs.ResNameSeed }}"
           echo "Runner is ${{ github.event.inputs.runner }}"
+          echo "Runner will use self-hosted : ${{ env.isselfhosted }}"
           echo "WebTrafficRestrict is: ${{ github.event.inputs.WebTrafficRestrict }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "Ref is ${{ github.ref }}"
