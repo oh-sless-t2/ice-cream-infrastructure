@@ -72,6 +72,11 @@ resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWeb
     Frequency: 300
     Timeout: 30
     Enabled:true
+    Request: {
+      FollowRedirects: false
+      HttpVerb: 'Get'
+      RequestUrl: appInsights_webTestUrl
+    }
     Locations: [
       {
         Id: 'emea-nl-ams-azr'
