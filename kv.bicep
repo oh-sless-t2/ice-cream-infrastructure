@@ -59,3 +59,5 @@ resource secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
     value: secretValue
   }
 }
+output secretUriWithVersion string = secret.properties.secretUriWithVersion
+output secretUri string = secret.properties.secretUri

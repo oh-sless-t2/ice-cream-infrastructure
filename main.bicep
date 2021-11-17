@@ -26,12 +26,13 @@ resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
   location: resourceGroup().location
 }
 
+var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${akv.outputs.secretUriWithVersion})'
 module functionApp 'functionapp.bicep' = {
   name: 'functionApp-${appName}'
   params: {
     appName: appName
     AppInsightsName: AppInsights.name
-    CosmosConnectionString: cosmos.outputs.connstr
+    CosmosConnectionString: kv_cosmosconnectionstring //cosmos.outputs.connstr
     restrictTrafficToJustAPIM: restrictTrafficToJustAPIM && createApimService
     fnAppIdentityName: fnAppUai.name
   }
