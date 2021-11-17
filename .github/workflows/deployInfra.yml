@@ -51,7 +51,7 @@ jobs:
     concurrency: ci-${{ github.event.inputs.RG }}
     runs-on: ${{ github.event.inputs.runner }} #self-hosted #ubuntu-latest
     env: 
-      isselfhosted: ${{ github.event.inputs.runner == "open-hack" }}
+      isselfhosted: github.event.inputs.runner == "open-hack"
     steps:
       - uses: actions/checkout@v2
       
