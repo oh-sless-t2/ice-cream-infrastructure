@@ -60,8 +60,7 @@ resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWeb
   location: resourceGroup().location
   kind: 'ping'
     tags: {
-    createdwith: 'natch-bicep'
-    //'hidden-link:${resourceGroup().id}/providers/Microsoft.Insights/components/${webAppName}': 'Resource'
+    'hidden-link:${AppInsights.id}': 'Resource'
   }
   properties: {
     Name: 'TestRatingsAPI'
