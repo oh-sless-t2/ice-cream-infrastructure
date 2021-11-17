@@ -55,7 +55,7 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' = {
 }
 
 
-resource urlTest 'Microsoft.Insights/webtests@2020-10-05-preview' = if(deployWebTests) {
+resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWebTests) {
   name: 'TestRatingsAPI'
   location: resourceGroup().location
   kind: 'ping'
@@ -72,7 +72,19 @@ resource urlTest 'Microsoft.Insights/webtests@2020-10-05-preview' = if(deployWeb
     Enabled:true
     Locations: [
       {
-        Id: resourceGroup().location
+        Id: 'northeurope'
+      }
+      {
+        Id: 'westeurope'
+      }
+      {
+        Id: 'uksouth'
+      }
+      {
+        Id: 'westus'
+      }
+      {
+        Id: 'australiaeast'
       }
     ]
   }
