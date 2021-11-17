@@ -50,6 +50,7 @@ jobs:
           echo "RG is: ${{ github.event.inputs.resourcegroup }}"
           
           echo "APIMName is: ${{ github.event.inputs.apimname }}"
+          echo "Ratings url is: ${{ github.event.inputs.ratingsapiurl }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "Ref is ${{ github.ref }}"
           echo "EventTrigger name is ${{github.event_name}}"
@@ -72,7 +73,9 @@ jobs:
           inlineScript: |
             RG='${{ github.event.inputs.ResourceGroup }}'
             APIMNAME='${{ github.event.inputs.APIMName }}'
-            az deployment group validate -f apim-apis.bicep -g $RG -p apimName=$APIMNAME
+            RATINGSURL='${{ github.event.inputs.ratingsapiurl }}'
+            
+            az deployment group validate -f apim-apis.bicep -g $RG -p apimName=$APIMNAME ratingsApiBaseUrl="$RATINGSURL"
           
       - name: Deploy Infrastructure
         id: deployInfra
@@ -82,8 +85,9 @@ jobs:
           inlineScript: |
             RG='${{ github.event.inputs.ResourceGroup }}'
             APIMNAME='${{ github.event.inputs.APIMName }}'
+            RATINGSURL='${{ github.event.inputs.ratingsapiurl }}'
             
-            az deployment group create -f apim-apis.bicep -g $RG -p apimName=$APIMNAME --name $DEPNAME
+            az deployment group create -f apim-apis.bicep -g $RG -p apimName=$APIMNAME ratingsApiBaseUrl="$RATINGSURL" --name $DEPNAME
             
             DEPSTATUS=$(az deployment operation group list --resource-group $RG --name $DEPNAME) #--query "[?properties.provisioningState=='Failed']"
             echo $DEPSTATUS
