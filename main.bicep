@@ -1,15 +1,18 @@
 @description('The name seed for your application. Check outputs for the actual name and url')
 param appName string = 'ratings'
 
+@description('The name seed for your other resources. Check outputs for the actual name and url')
 param resNameSeed string = 'icecream'
 
 @description('Name of the CosmosDb Account')
-param databaseAccountId string = toLower('db-${appName}')
+param databaseAccountId string = toLower('db-${resNameSeed}')
 
 @description('Name of the web app host plan')
 param hostingPlanName string = 'plan-${appName}'
 
+@description('Restricts inbound traffic to your functionapp, to just from APIM')
 param restrictTrafficToJustAPIM bool = false
+
 
 //Making the name unique - if this fails, it's because the name is already taken (and you're really unlucky!)
 var webAppName = 'app-${appName}-${uniqueString(resourceGroup().id, appName)}'

@@ -65,7 +65,7 @@ resource apimPolicy 'Microsoft.ApiManagement/service/policies@2019-12-01' = {
 }
 
 resource apiUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
-  name: 'id-${nameSeed}'
+  name: 'id-apim-${nameSeed}'
   location: location
 }
 output apimUaiName string = apiUai.name
