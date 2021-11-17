@@ -1,14 +1,9 @@
-// This file uses the newer API's for Cosmos, however the node app doesn't cope well
-// Leaving the file here for reference, but know that it's not used by main.bicep
-
 @description('Name of the CosmosDb Account')
 param databaseAccountId string
 
-param databaseAccountLocation string =resourceGroup().location
-
-param databaseName string = 'icecream'
-param collectionName string = 'ratings'
-param partitionkey string= 'productId'
+param databaseName string
+param collectionName string
+param partitionkey string
 
 param fnAppUaiName string
 
@@ -19,7 +14,7 @@ resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-06-15' = {
   kind: 'GlobalDocumentDB'
   name: databaseAccountId
-  location: databaseAccountLocation
+  location: resourceGroup().location
   properties: {
     databaseAccountOfferType: 'Standard'
     locations: [
