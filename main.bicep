@@ -13,7 +13,7 @@ var createApimService = true
 @description('Restricts inbound traffic to your functionapp, to just from APIM')
 param restrictTrafficToJustAPIM bool = false
 
-param deployWebTests bool =false
+param deployWebTests bool =true
 
 //Making the name unique - if this fails, it's because the name is already taken (and you're really unlucky!)
 var webAppName = 'app-${appName}-${uniqueString(resourceGroup().id, appName)}'
