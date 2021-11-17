@@ -23,6 +23,12 @@ on:
         default: "icecream"
         required: true
         
+      WebTrafficRestrict:
+        description: "Restrict web traffic from APIM to AzFnApp"
+        type: boolean
+        default: "false"
+        required: true
+        
 env:
   #RG: "team2App-devenv" #The resource group we're deploying to.
   #ParamFilePath: ".github/workflows_dep/AksDeploy-Basic.parameters.json" #Path to parameter file
@@ -44,6 +50,7 @@ jobs:
           
           echo "ApiName is: ${{ github.event.inputs.ApiName }}"
           echo "ResNameSeed is: ${{ github.event.inputs.ResNameSeed }}"
+          echo "WebTrafficRestrict is: ${{ github.event.inputs.WebTrafficRestrict }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "Ref is ${{ github.ref }}"
           echo "EventTrigger name is ${{github.event_name}}"
@@ -67,8 +74,9 @@ jobs:
             RG="${{ github.event.inputs.RG }}"
             RESNAME="${{ github.event.inputs.ApiName }}"
             ResNameSeed="${{ github.event.inputs.ResNameSeed }}"
+            WebTrafficRestrict="${{ github.event.inputs.WebTrafficRestrict }}"
 
-            az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME resNameSeed=$ResNameSeed
+            az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME resNameSeed=$ResNameSeed restrictTrafficToJustAPIM=$WebTrafficRestrict
           
       - name: Deploy Infrastructure
         id: deployInfra
@@ -79,8 +87,9 @@ jobs:
             RG="${{ github.event.inputs.RG }}"
             RESNAME="${{ github.event.inputs.ApiName }}"
             ResNameSeed="${{ github.event.inputs.ResNameSeed }}"
+            WebTrafficRestrict="${{ github.event.inputs.WebTrafficRestrict }}"
             
-            az deployment group create -f main.bicep -g $RG -p appName=$RESNAME  resNameSeed=$ResNameSeed --name $DEPNAME 
+            az deployment group create -f main.bicep -g $RG -p appName=$RESNAME  resNameSeed=$ResNameSeed restrictTrafficToJustAPIM=$WebTrafficRestrict --name $DEPNAME 
             
             DEPSTATUS=$(az deployment operation group list --resource-group $RG --name $DEPNAME) #--query "[?properties.provisioningState=='Failed']"
             echo $DEPSTATUS
