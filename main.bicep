@@ -1,6 +1,8 @@
 @description('The name seed for your application. Check outputs for the actual name and url')
 param appName string = 'ratings'
 
+param apimNameSeed string = 'icecream'
+
 @description('Name of the CosmosDb Account')
 param databaseAccountId string = toLower('db-${appName}')
 
@@ -170,7 +172,7 @@ module cosmos 'cosmos-sql.bicep' = {
 module apim 'apim.bicep' = {
   name: 'apim'
   params: {
-    nameSeed: 'icecream'
+    nameSeed: apimNameSeed
     AppInsightsName: AppInsights.name
   }
 }
