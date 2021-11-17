@@ -145,8 +145,6 @@ jobs:
           
       - name: Validate Infrastructure deployment
         run: |
-          azcliversion: ${{ env.AZCLIVERSION }}
-          inlineScript: |
           RG="${{ github.event.inputs.RG }}"
           RESNAME="${{ github.event.inputs.ApiName }}"
           ResNameSeed="${{ github.event.inputs.ResNameSeed }}"
@@ -157,8 +155,6 @@ jobs:
       - name: Deploy Infrastructure
         id: deployInfra
         run: |
-          azcliversion: ${{ env.AZCLIVERSION }}
-          inlineScript: |
           RG="${{ github.event.inputs.RG }}"
           RESNAME="${{ github.event.inputs.ApiName }}"
           ResNameSeed="${{ github.event.inputs.ResNameSeed }}"
