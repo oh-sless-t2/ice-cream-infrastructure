@@ -54,7 +54,7 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-var appInsights_webTestUrl = '{functionApp.outputs.appUrl}/GetRatings/cc20a6fb-a91f-4192-874d-132493685376'
+var appInsights_webTestUrl = '${functionApp.outputs.appUrl}/GetRatings/cc20a6fb-a91f-4192-874d-132493685376'
 resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWebTests) {
   name: 'TestRatingsAPI'
   location: resourceGroup().location
@@ -65,10 +65,6 @@ resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWeb
   properties: {
     Name: 'TestRatingsAPI'
     Kind: 'standard'
-
-    // Configuration: {
-    //   WebTest: '<WebTest xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010" Name="PING root" Enabled="True" CssProjectStructure="" CssIteration="" Timeout="30" WorkItemIds="" Description="" CredentialUserName="" CredentialPassword="" PreAuthenticate="True" Proxy="default" StopOnError="False" RecordedResultFile="" ResultsLocale=""><Items><Request Encoding="utf-8" Method="GET" Version="1.1" Url="${appInsights_webTestUrl}" ThinkTime="0" Timeout="30" ParseDependentRequests="True" FollowRedirects="True" RecordResult="True" Cache="False" ResponseTimeGoal="0" ExpectedHttpStatusCode="200" ExpectedResponseUrl="" ReportingName="" IgnoreHttpStatusCode="False" /></Items></WebTest>'
-    // }
     SyntheticMonitorId: 'TestRatingsAPI'
     Frequency: 300
     Timeout: 30
