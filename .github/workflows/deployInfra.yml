@@ -68,7 +68,7 @@ jobs:
             RESNAME="${{ github.event.inputs.ApiName }}"
             ResNameSeed="${{ github.event.inputs.ResNameSeed }}"
 
-            az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME ResNameSeed=$ResNameSeed
+            az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME resNameSeed=$ResNameSeed
           
       - name: Deploy Infrastructure
         id: deployInfra
@@ -80,7 +80,7 @@ jobs:
             RESNAME="${{ github.event.inputs.ApiName }}"
             ResNameSeed="${{ github.event.inputs.ResNameSeed }}"
             
-            az deployment group create -f main.bicep -g $RG -p appName=$RESNAME  ResNameSeed=$ResNameSeed --name $DEPNAME 
+            az deployment group create -f main.bicep -g $RG -p appName=$RESNAME  resNameSeed=$ResNameSeed --name $DEPNAME 
             
             DEPSTATUS=$(az deployment operation group list --resource-group $RG --name $DEPNAME) #--query "[?properties.provisioningState=='Failed']"
             echo $DEPSTATUS
