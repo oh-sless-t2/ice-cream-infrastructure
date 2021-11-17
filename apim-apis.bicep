@@ -51,7 +51,7 @@ resource ProductApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = 
   parent: apim
   properties: {
     path: 'products'
-    displayName: 'Users API'
+    displayName: 'Products API'
     serviceUrl: 'https://serverlessohapi.azurewebsites.net/api/'
     protocols: [
       'https'
