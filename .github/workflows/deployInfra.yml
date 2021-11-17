@@ -47,7 +47,7 @@ env:
   AZCLIVERSION: latest #2.30.0 #Pinning to a specific AZ CLI version
 
 jobs:
-  Deploy:
+  Deploy_GitHubHosted:
     if: github.event.inputs.runner != 'open-hack'
     concurrency: ci-${{ github.event.inputs.RG }}
     runs-on: ${{ github.event.inputs.runner }} #self-hosted #ubuntu-latest
@@ -114,8 +114,10 @@ jobs:
             APPNAME=$(az deployment group show -n $DEPNAME -g $RG --query "properties.outputs.appName.value" -o tsv)
             echo "APPNAME returned from az deployment = $APPNAME"
             echo "::set-output name=APPNAME::$APPNAME"
-             
-  DeploySelfHosted:
+
+#My runner doesn't want/need/like the docker tooling - so we're not going to do any clever actions.
+#Just normal AZ CLI Commands here :)
+  Deploy_SelfHosted:
     if: github.event.inputs.runner == 'open-hack'
     concurrency: ci-${{ github.event.inputs.RG }}
     runs-on: ${{ github.event.inputs.runner }} #self-hosted #ubuntu-latest
