@@ -135,7 +135,7 @@ resource RatingsAdminApi 'Microsoft.ApiManagement/service/apis@2021-04-01-previe
   name: 'RatingsAdmin'
   parent: apim
   properties: {
-    path: 'ratings'
+    path: 'ratingsadmin'
     displayName: 'Ratings Admin API'
     serviceUrl: ratingsApiBaseUrl
     protocols: [
