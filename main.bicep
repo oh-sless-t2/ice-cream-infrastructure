@@ -54,7 +54,7 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-var appInsights_webTestUrl = '${functionApp.outputs.appUrl}/GetRatings/cc20a6fb-a91f-4192-874d-132493685376'
+var appInsights_webTestUrl = 'https://${functionApp.outputs.appUrl}/api/GetRatings/cc20a6fb-a91f-4192-874d-132493685376'
 resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWebTests) {
   name: 'TestRatingsAPI'
   location: resourceGroup().location
