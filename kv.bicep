@@ -5,7 +5,7 @@ param nameSeed string
 param apimUaiName string
 param fnAppUaiName string
 
-var kvName = replace('kv-${nameSeed}-${uniqueString(resourceGroup().id, nameSeed)}','-','')
+var kvName = substring(replace('kv-${nameSeed}-${uniqueString(resourceGroup().id, nameSeed)}','-',''),0,23)
 
 resource apiUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
   name: apimUaiName
