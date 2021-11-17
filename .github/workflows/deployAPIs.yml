@@ -4,34 +4,15 @@ name: Deploy APIM Api definitions
 on:
   workflow_dispatch:
     inputs:
-      resourcegroup:
-        description: "Resource Group to deploy to"
-        default: "team2App-devenv"
+      environment:
+        description: "Which env you are updating"
+        default: "blue"
         required: true
         type: choice
         options: 
-        - team2App-devenv
-        - team2App-bluedevenv
-        - team2App-greendevenv
-        
-      apimname:
-        description: "API Management Instance Name"
-        default: "apim-icecream"
-        required: true
-        type: choice
-        options: 
-        - apim-icecream
-        - apim-icecreamgreen-nxwhongiagiiu
-        - apim-icecreamblue-3plwdf5dpxexw
-        
-      ratingsapiurl:
-        description: "Ratings Api Url"
-        default: "https://app-ratings-fi4a3nk4vlrka.azurewebsites.net/api"
-        required: true
-        type: choice
-        options: 
-        - "https://app-ratings-vsabv73meajog.azurewebsites.net/api"
-        - "https://app-ratings-fi4a3nk4vlrka.azurewebsites.net/api"
+        - original
+        - blue
+        - green
         
 env:
   DEPNAME: "DepApi${{ github.run_number }}" #Deployment Name
@@ -47,10 +28,8 @@ jobs:
       
       - name: Job parameter check
         run: |       
-          echo "RG is: ${{ github.event.inputs.resourcegroup }}"
-          
-          echo "APIMName is: ${{ github.event.inputs.apimname }}"
-          echo "Ratings url is: ${{ github.event.inputs.ratingsapiurl }}"
+          echo "environment is: ${{ github.event.inputs.environment }}"
+    
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "Ref is ${{ github.ref }}"
           echo "EventTrigger name is ${{github.event_name}}"
@@ -58,6 +37,32 @@ jobs:
           
           echo "Inputs are ${{ tojson(github.event.inputs) }}"
           
+      - name: Set up variables for environment
+        id: theEnv
+        run: |     
+          if [ "${{ github.event.inputs.environment }}" == "blue" ]
+          then
+                RATINGSAPI='https://app-ratings-vsabv73meajog.azurewebsites.net/api'
+                RG='team2App-bluedevenv'
+                APIM='apim-icecreamblue-3plwdf5dpxexw'
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "green" ]
+          then
+                RATINGSAPI='https://app-ratings-w2y33gzfl7kbo.azurewebsites.net/api'
+                RG='team2App-greendevenv'
+                APIM='apim-icecreamgreen-nxwhongiagiiu'
+          fi
+          if [ "${{ github.event.inputs.environment }}" == "original" ]
+          then
+                RATINGSAPI='https://app-ratings-fi4a3nk4vlrka.azurewebsites.net/api'
+                RG='team2App-bluedevenv'
+                APIM='apim-icecreamblue-3plwdf5dpxexw'
+          fi
+          
+          echo "::set-output name=RATINGSAPI::$RATINGSAPI"
+          echo "::set-output name=RG::$RG"
+          echo "::set-output name=APIM::$APIM"
+            
       - name: Azure Login
         uses: Azure/login@v1
         with:
@@ -71,9 +76,9 @@ jobs:
         with:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
-            RG='${{ github.event.inputs.ResourceGroup }}'
-            APIMNAME='${{ github.event.inputs.APIMName }}'
-            RATINGSURL='${{ github.event.inputs.ratingsapiurl }}'
+            RG='${{ steps.theEnv.outputs.RG}}'
+            APIMNAME='${{ steps.theEnv.outputs.APIM}}'
+            RATINGSURL='${{ steps.theEnv.outputs.RATINGSAPI}}'
             
             az deployment group validate -f apim-apis.bicep -g $RG -p apimName=$APIMNAME ratingsApiBaseUrl="$RATINGSURL"
           
@@ -83,9 +88,9 @@ jobs:
         with:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
-            RG='${{ github.event.inputs.ResourceGroup }}'
-            APIMNAME='${{ github.event.inputs.APIMName }}'
-            RATINGSURL='${{ github.event.inputs.ratingsapiurl }}'
+            RG='${{ steps.theEnv.outputs.RG}}'
+            APIMNAME='${{ steps.theEnv.outputs.APIM}}'
+            RATINGSURL='${{ steps.theEnv.outputs.RATINGSAPI}}'
             
             az deployment group create -f apim-apis.bicep -g $RG -p apimName=$APIMNAME ratingsApiBaseUrl="$RATINGSURL" --name $DEPNAME
             
