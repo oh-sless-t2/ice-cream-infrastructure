@@ -50,8 +50,8 @@ jobs:
   Deploy:
     concurrency: ci-${{ github.event.inputs.RG }}
     runs-on: ${{ github.event.inputs.runner }} #self-hosted #ubuntu-latest
-    env: 
-      isselfhosted: github.event.inputs.runner == "open-hack"
+    #env: 
+    #  isselfhosted:  ${{ github.event.inputs.runner == "open-hack" }}
     steps:
       - uses: actions/checkout@v2
       
@@ -72,7 +72,8 @@ jobs:
           echo "Inputs are ${{ tojson(github.event.inputs) }}"
           
       - name: Azure Login
-        if: ${{ github.event.inputs.runner }} != "open-hack"
+        #if: ${{ github.event.inputs.runner }} != "open-hack"
+        if: github.event.inputs.runner != 'open-hack'
         uses: Azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -81,7 +82,7 @@ jobs:
           allow-no-subscriptions: false
           
       - name: Azure Login MSI
-        if: ${{ github.event.inputs.runner }} == "open-hack"
+        if: github.event.inputs.runner == 'open-hack'
         run: |
           az login --identity
           
