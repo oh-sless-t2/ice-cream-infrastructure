@@ -9,7 +9,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' existing = {
   name: apimName
 }
 
-resource OhApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
+resource UserApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
   name: 'GetUsers'
   parent: apim
   properties: {
@@ -25,7 +25,7 @@ resource OhApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
 
 resource GetUsersMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
   name: 'GetUsers'
-  parent: OhApi
+  parent: UserApi
   properties: {
     displayName: 'Get Users'
     method: 'GET'
@@ -36,7 +36,7 @@ resource GetUsersMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04
 
 resource GetUserMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
   name: 'GetUser'
-  parent: OhApi
+  parent: UserApi
   properties: {
     displayName: 'Get User'
     method: 'GET'
@@ -45,9 +45,23 @@ resource GetUserMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-
   }
 }
 
+resource ProductApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
+  name: 'ProductAPI'
+  parent: apim
+  properties: {
+    path: 'users'
+    displayName: 'Users API'
+    serviceUrl: 'https://serverlessohapi.azurewebsites.net/api/'
+    protocols: [
+      'https'
+    ]
+    subscriptionRequired: false
+  }
+}
+
 resource GetProductsMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
   name: 'GetProducts'
-  parent: OhApi
+  parent: ProductApi
   properties: {
     displayName: 'Get Products'
     method: 'GET'
@@ -58,7 +72,7 @@ resource GetProductsMethod 'Microsoft.ApiManagement/service/apis/operations@2021
 
 resource GetProductMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
   name: 'GetProduct'
-  parent: OhApi
+  parent: ProductApi
   properties: {
     displayName: 'Get Product'
     method: 'GET'
@@ -82,7 +96,7 @@ resource RatingsApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = 
 }
 
 resource GetRatingsMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
-  name: 'GetRating'
+  name: 'GetRatings'
   parent: RatingsApi
   properties: {
     displayName: 'Get Ratings'
@@ -99,12 +113,91 @@ resource GetRatingsMethod 'Microsoft.ApiManagement/service/apis/operations@2021-
   }
 }
 
-// resource apimProduct 'Microsoft.ApiManagement/service/products@2019-12-01' = {
-//   name: '${apim.name}/custom-product'
+resource GetRatingMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
+  name: 'GetRating'
+  parent: RatingsApi
+  properties: {
+    displayName: 'Get Rating'
+    method: 'GET'
+    urlTemplate: '/GetRating/{RatingId}'
+    description: 'Get all of the ratings'
+    templateParameters: [
+      {
+        name: 'ratingsId'
+        defaultValue: '79c2779e-dd2e-43e8-803d-ecbebed8972c'
+        type: ''
+      }
+    ]
+  }
+}
+
+resource RatingsAdminApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
+  name: 'RatingsAdmin'
+  parent: apim
+  properties: {
+    path: 'ratings'
+    displayName: 'Ratings Admin API'
+    serviceUrl: ratingsApiBaseUrl
+    protocols: [
+      'https'
+    ]
+    subscriptionRequired: false
+  }
+}
+
+resource CreateRatingsMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
+  name: 'CreateRatings'
+  parent: RatingsAdminApi
+  properties: {
+    displayName: 'Create Ratings'
+    method: 'POST'
+    urlTemplate: '/CreateRatings'
+    description: 'Create a ratings'
+  }
+}
+
+resource mobileUsers 'Microsoft.ApiManagement/service/products@2019-12-01' = {
+  name: 'mobileUsers'
+  parent: apim
+  properties: {
+    approvalRequired: true
+    subscriptionRequired: true
+    displayName: 'Mobile Users'
+    state: 'published'
+  }
+}
+
+resource InternalUsers 'Microsoft.ApiManagement/service/products@2019-12-01' = {
+  name: 'internalUsers'
+  parent: apim
+  properties: {
+    approvalRequired: true
+    subscriptionRequired: true
+    displayName: 'Internal Users'
+    state: 'published'
+  }
+}
+
+resource Partners 'Microsoft.ApiManagement/service/products@2019-12-01' = {
+  name: 'ExternalPartners'
+  parent: apim
+  properties: {
+    approvalRequired: true
+    subscriptionRequired: true
+    displayName: 'External Partners Users'
+    state: 'published'
+  }
+}
+
+// resource PartnerRateLimit 'Microsoft.ApiManagement/service/policies@2021-04-01-preview' = {
+//   name: 'ExternalPartners'
+  
+//   parent: apim
 //   properties: {
+
 //     approvalRequired: true
 //     subscriptionRequired: true
-//     displayName: 'Custom product'
+//     displayName: 'External Partners Users'
 //     state: 'published'
 //   }
 // }

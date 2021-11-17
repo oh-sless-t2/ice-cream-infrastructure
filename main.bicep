@@ -13,6 +13,7 @@ var createApimService = true
 @description('Restricts inbound traffic to your functionapp, to just from APIM')
 param restrictTrafficToJustAPIM bool = false
 
+param deployWebTests bool =false
 
 //Making the name unique - if this fails, it's because the name is already taken (and you're really unlucky!)
 var webAppName = 'app-${appName}-${uniqueString(resourceGroup().id, appName)}'
@@ -52,6 +53,31 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' = {
     IngestionMode: 'LogAnalytics'
   }
 }
+
+
+resource urlTest 'Microsoft.Insights/webtests@2020-10-05-preview' = if(deployWebTests) {
+  name: 'TestRatingsAPI'
+  location: resourceGroup().location
+  kind: 'ping'
+    tags: {
+    createdwith: 'natch-bicep'
+    //'hidden-link:${resourceGroup().id}/providers/Microsoft.Insights/components/${webAppName}': 'Resource'
+  }
+  properties: {
+    Name: 'TestRatingsAPI'
+    Kind: 'standard'
+    SyntheticMonitorId: 'TestRatingsAPI'
+    Frequency: 300
+    Timeout: 30
+    Enabled:true
+    Locations: [
+      {
+        Id: resourceGroup().location
+      }
+    ]
+  }
+}
+
 
 @description('The Log Analytics retention period')
 param retentionInDays int = 30
