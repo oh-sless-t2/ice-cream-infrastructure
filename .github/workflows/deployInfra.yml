@@ -47,7 +47,7 @@ env:
   AZCLIVERSION: latest #2.30.0 #Pinning to a specific AZ CLI version
 
 jobs:
-  Deploy:
+  Deploy_GitHubHosted:
     if: github.event.inputs.runner != 'open-hack'
     concurrency: ci-${{ github.event.inputs.RG }}
     runs-on: ${{ github.event.inputs.runner }} #self-hosted #ubuntu-latest
@@ -115,7 +115,7 @@ jobs:
             echo "APPNAME returned from az deployment = $APPNAME"
             echo "::set-output name=APPNAME::$APPNAME"
              
-  DeploySelfHosted:
+  Deploy_SelfHosted:
     if: github.event.inputs.runner == 'open-hack'
     concurrency: ci-${{ github.event.inputs.RG }}
     runs-on: ${{ github.event.inputs.runner }} #self-hosted #ubuntu-latest
