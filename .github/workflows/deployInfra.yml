@@ -8,10 +8,17 @@ on:
         description: "Resource Group to deploy to"
         default: "team2App-devenv"
         required: true
+        
       AppNameSpeed:
         description: "App Name Seed"
         default: "Ratings"
         required: true
+        
+      ApimNameSeed:
+        description: "App Name Seed"
+        default: "icecream"
+        required: true
+        
 env:
   #RG: "team2App-devenv" #The resource group we're deploying to.
   #ParamFilePath: ".github/workflows_dep/AksDeploy-Basic.parameters.json" #Path to parameter file
@@ -32,12 +39,14 @@ jobs:
           echo "RG is: ${{ github.event.inputs.RG }}"
           
           echo "AppNameSpeed is: ${{ github.event.inputs.AppNameSpeed }}"
+          echo "ApimNameSeed is: ${{ github.event.inputs.ApimNameSeed }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "Ref is ${{ github.ref }}"
           echo "EventTrigger name is ${{github.event_name}}"
           echo "AZCLIVERSION is ${{ env.AZCLIVERSION }}"
           
           echo "Inputs are ${{ tojson(github.event.inputs) }}"
+          
       - name: Azure Login
         uses: Azure/login@v1
         with:
@@ -53,8 +62,9 @@ jobs:
           inlineScript: |
             RG="${{ github.event.inputs.RG }}"
             RESNAME="${{ github.event.inputs.AppNameSpeed }}"
+            APIMNAMESEED="${{ github.event.inputs.ApimNameSeed }}"
 
-            az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME
+            az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME apimNameSeed=$APIMNAMESEED
           
       - name: Deploy Infrastructure
         id: deployInfra
@@ -64,8 +74,9 @@ jobs:
           inlineScript: |
             RG="${{ github.event.inputs.RG }}"
             RESNAME="${{ github.event.inputs.AppNameSpeed }}"
+            APIMNAMESEED="${{ github.event.inputs.ApimNameSeed }}"
             
-            az deployment group create -f main.bicep -g $RG -p appName=$RESNAME --name $DEPNAME
+            az deployment group create -f main.bicep -g $RG -p appName=$RESNAME  apimNameSeed=$APIMNAMESEED --name $DEPNAME 
             
             DEPSTATUS=$(az deployment operation group list --resource-group $RG --name $DEPNAME) #--query "[?properties.provisioningState=='Failed']"
             echo $DEPSTATUS
