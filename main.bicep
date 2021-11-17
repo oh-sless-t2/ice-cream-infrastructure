@@ -7,8 +7,12 @@ param resNameSeed string = 'icecream'
 @description('Name of the CosmosDb Account')
 param databaseAccountId string = toLower('db-${resNameSeed}')
 
-//TODO: Change to param in further refactor
-var createApimService = true
+@allowed([
+  'Developer'
+  'Premium'
+  'Consumption'
+])
+param apiManagementSku string = 'Consumption'
 
 @description('Restricts inbound traffic to your functionapp, to just from APIM')
 param restrictTrafficToJustAPIM bool = false
@@ -34,7 +38,7 @@ module functionApp 'functionapp.bicep' = {
     appName: appName
     AppInsightsName: AppInsights.name
     CosmosConnectionString: kv_cosmosconnectionstring //cosmos.outputs.connstr
-    restrictTrafficToJustAPIM: restrictTrafficToJustAPIM && createApimService
+    restrictTrafficToJustAPIM: restrictTrafficToJustAPIM 
     fnAppIdentityName: fnAppUai.name
   }
 }
@@ -135,19 +139,22 @@ module akv 'kv.bicep' = {
   }
 }
 
-module apim 'apim.bicep' = if(createApimService) {
+module apim 'apim.bicep' =  {
   name: 'apim'
   params: {
     nameSeed: resNameSeed
     AppInsightsName: AppInsights.name
+    sku: apiManagementSku
   }
 }
 
-//APIM doesn't like the fast follow of API's
+//Some APIM SKU's don't seem to like the fast follow deployment of API's
 //Do this part in another pipeline calling the bicep file
-// module apis 'apim-apis.bicep' = {
-//   name: 'apim-apis'
-//   params: {
-//     apimName: apim.outputs.ApimName
-//   }
-// }
+//I mean they have a different lifecycle anyway :)
+module apis 'apim-apis.bicep' = {
+  name: 'apim-apis'
+  params: {
+    apimName: apim.outputs.ApimName
+    AppInsightsName: AppInsights.name
+  }
+}

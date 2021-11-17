@@ -1,6 +1,8 @@
 @description('Name of the App Insights Resource')
 param AppInsightsName string
 
+param Name string
+
 @description('URL to test')
 param WebTestUrl string
 
@@ -11,16 +13,16 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = {
 }
 
 resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = {
-  name: 'TestRatingsAPI'
+  name: Name
   location: resourceGroup().location
   kind: 'ping'
     tags: {
     'hidden-link:${AppInsights.id}': 'Resource'
   }
   properties: {
-    Name: 'TestRatingsAPI'
+    Name: Name
     Kind: 'standard'
-    SyntheticMonitorId: 'TestRatingsAPI'
+    SyntheticMonitorId: Name
     Frequency: 300
     Timeout: 30
     Enabled:true

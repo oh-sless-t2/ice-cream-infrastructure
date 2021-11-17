@@ -13,8 +13,9 @@ param publisherName string = 'Gobyers'
 @allowed([
   'Developer'
   'Premium'
+  'Consumption'
 ])
-param sku string = 'Developer'
+param sku string = 'Consumption'
 
 @description('The email address of the owner of the service')
 @minLength(1)
@@ -40,9 +41,9 @@ resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
   location: location
   sku: {
     name: sku
-    capacity: skuCount
+    capacity: sku=='Consumption' ? 0 :  skuCount
   }
-  zones: ((length(availabilityZones) == 0 || sku=='Developer') ? json('null') : availabilityZones)
+  zones: ((length(availabilityZones) == 0 || sku!='Premium') ? json('null') : availabilityZones)
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {

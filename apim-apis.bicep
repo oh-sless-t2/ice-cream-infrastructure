@@ -4,11 +4,18 @@
 param apimName string
 
 param ratingsApiBaseUrl string = 'https://app-ratings-fi4a3nk4vlrka.azurewebsites.net/api'
+param productsApiBaseUrl string = 'https://serverlessohapi.azurewebsites.net/api/'
+param usersApiBaseUrl string = 'https://serverlessohapi.azurewebsites.net/api/'
+
+param AppInsightsName string = ''
 
 resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' existing = {
   name: apimName
 }
 
+resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!empty(AppInsightsName)) {
+  name: AppInsightsName
+}
 
 resource UserApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
   name: 'GetUsers'
@@ -16,7 +23,7 @@ resource UserApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
   properties: {
     path: 'users'
     displayName: 'Users API'
-    serviceUrl: 'https://serverlessohapi.azurewebsites.net/api/'
+    serviceUrl: usersApiBaseUrl
     protocols: [
       'https'
     ]
@@ -52,7 +59,7 @@ resource ProductApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = 
   properties: {
     path: 'products'
     displayName: 'Products API'
-    serviceUrl: 'https://serverlessohapi.azurewebsites.net/api/'
+    serviceUrl: productsApiBaseUrl
     protocols: [
       'https'
     ]
@@ -68,6 +75,26 @@ resource GetProductsMethod 'Microsoft.ApiManagement/service/apis/operations@2021
     method: 'GET'
     urlTemplate: '/GetProducts'
     description: 'Get all of the Ice Cream Products'
+  }
+}
+
+resource GetProductsCacheMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
+  name: 'GetProductsCacheDemo'
+  parent: ProductApi
+  properties: {
+    displayName: 'Get Products cache demo'
+    method: 'GET'
+    urlTemplate: '/GetProducts?randomqs=true'
+    description: 'Get all of the Ice Cream Products. Cachey cache cache'
+  }
+}
+
+resource ProductCache 'Microsoft.ApiManagement/service/apis/operations/policies@2021-04-01-preview' = {
+  name: 'policy'
+  parent: GetProductsCacheMethod
+  properties: {
+    value: 'https://raw.githubusercontent.com/Gordonby/Snippets/master/AzureApimPolicies/CacheFor3600.xml'
+    format: 'xml-link'
   }
 }
 
@@ -187,6 +214,52 @@ resource Partners 'Microsoft.ApiManagement/service/products@2019-12-01' = {
     subscriptionRequired: true
     displayName: 'External Partners Users'
     state: 'published'
+  }
+}
+
+module webTestGetProducts 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
+  name: 'ApimWebTest-GetProducts'
+  params: {
+    Name: '${ProductApi.name}-GetProducts-Apim'
+    AppInsightsName: AppInsights.name
+    //I'm leaving this first() example here instead of just using apim.properties.gatewayUrl - just for reference of another way
+    WebTestUrl: 'https://${first(apim.properties.hostnameConfigurations).hostName}/Products${GetProductsMethod.properties.urlTemplate}'
+  }
+}
+
+module webTestGetProductsCached 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
+  name: 'ApimWebTest-GetProductsCached'
+  params: {
+    Name: '${ProductApi.name}-GetProducts-ApimCached'
+    AppInsightsName: AppInsights.name
+    WebTestUrl: '${apim.properties.gatewayUrl}/Products${GetProductsCacheMethod.properties.urlTemplate}'
+  }
+}
+
+module webTestDirectGetProducts 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
+  name: 'DirectWebTest-GetProducts'
+  params: {
+    Name: '${ProductApi.name}-GetProducts-Direct'
+    AppInsightsName: AppInsights.name
+    WebTestUrl: '${usersApiBaseUrl}${GetProductsMethod.properties.urlTemplate}'
+  }
+}
+
+module webTestGetUsers 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
+  name: 'ApimWebTest-GetUsers'
+  params: {
+    Name: '${UserApi.name}-GetUsers-Apim'
+    AppInsightsName: AppInsights.name
+    WebTestUrl: '${apim.properties.gatewayUrl}/Users${GetUsersMethod.properties.urlTemplate}'
+  }
+}
+
+module webTestDirectGetUsers 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
+  name: 'DirectWebTest-GetUsers'
+  params: {
+    Name: '${UserApi.name}-GetUsers-Direct'
+    AppInsightsName: AppInsights.name
+    WebTestUrl: '${productsApiBaseUrl}${GetUsersMethod.properties.urlTemplate}'
   }
 }
 
