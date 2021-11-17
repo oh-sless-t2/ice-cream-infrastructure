@@ -1,7 +1,7 @@
 @description('The name seed for your application. Check outputs for the actual name and url')
 param appName string = 'ratings'
 
-param apimNameSeed string = 'icecream'
+param resNameSeed string = 'icecream'
 
 @description('Name of the CosmosDb Account')
 param databaseAccountId string = toLower('db-${appName}')
@@ -172,7 +172,7 @@ module cosmos 'cosmos-sql.bicep' = {
 module apim 'apim.bicep' = {
   name: 'apim'
   params: {
-    nameSeed: apimNameSeed
+    nameSeed: resNameSeed
     AppInsightsName: AppInsights.name
   }
 }
@@ -187,7 +187,7 @@ module apim 'apim.bicep' = {
 module akv 'kv.bicep' = {
   name: 'keyvault'
   params: {
-    keyvaultName: 'kvicecream'
+    nameSeed: 'kvicecream'
     apimUaiName: apim.outputs.apimUaiName
     fnAppUaiName: fnAppUai.name
   }
