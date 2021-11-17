@@ -97,42 +97,42 @@ resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
   name: fnAppIdentityName
 }
 
-// resource webAppConfig 'Microsoft.Web/sites/config@2019-08-01' = { 
-//   parent: webApp
-//   name: 'web'
-//   properties: {
-//     scmType: 'ExternalGit'
-//   }
-// }
+resource webAppConfig 'Microsoft.Web/sites/config@2019-08-01' = { 
+  parent: functionApp
+  name: 'web'
+  properties: {
+    scmType: 'ExternalGit'
+  }
+}
 
-// resource webAppLogging 'Microsoft.Web/sites/config@2021-02-01' = {
-//   parent: webApp
-//   name: 'logs'
-//   properties: {
-//     applicationLogs: {
-//       fileSystem: {
-//         level: 'Warning'
-//       }
-//     }
-//     httpLogs: {
-//       fileSystem: {
-//         enabled: true
-//         retentionInDays: 1
-//         retentionInMb: 25
-//       }
-//     }
-//   }
-// }
+resource webAppLogging 'Microsoft.Web/sites/config@2021-02-01' = {
+  parent: functionApp
+  name: 'logs'
+  properties: {
+    applicationLogs: {
+      fileSystem: {
+        level: 'Warning'
+      }
+    }
+    httpLogs: {
+      fileSystem: {
+        enabled: true
+        retentionInDays: 1
+        retentionInMb: 25
+      }
+    }
+  }
+}
 
-// resource codeDeploy 'Microsoft.Web/sites/sourcecontrols@2021-01-15' = {
-//   parent: functionApp
-//   name: 'web'
-//   properties: {
-//     repoUrl:'https://github.com/oh-sless-t2/dotnet-appsvc-cosmosdb-bottleneck'
-//     branch: 'main'
-//     isManualIntegration: true
-//   }
-// }
+resource codeDeploy 'Microsoft.Web/sites/sourcecontrols@2021-01-15' = {
+  parent: functionApp
+  name: 'web'
+  properties: {
+    repoUrl:'https://github.com/oh-sless-t2/ice-cream-rating-api'
+    branch: 'main'
+    isManualIntegration: true
+  }
+}
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: storageAccountName
