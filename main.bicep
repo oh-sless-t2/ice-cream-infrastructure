@@ -65,6 +65,7 @@ resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWeb
   properties: {
     Name: 'TestRatingsAPI'
     Kind: 'standard'
+
     // Configuration: {
     //   WebTest: '<WebTest xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010" Name="PING root" Enabled="True" CssProjectStructure="" CssIteration="" Timeout="30" WorkItemIds="" Description="" CredentialUserName="" CredentialPassword="" PreAuthenticate="True" Proxy="default" StopOnError="False" RecordedResultFile="" ResultsLocale=""><Items><Request Encoding="utf-8" Method="GET" Version="1.1" Url="${appInsights_webTestUrl}" ThinkTime="0" Timeout="30" ParseDependentRequests="True" FollowRedirects="True" RecordResult="True" Cache="False" ResponseTimeGoal="0" ExpectedHttpStatusCode="200" ExpectedResponseUrl="" ReportingName="" IgnoreHttpStatusCode="False" /></Items></WebTest>'
     // }
@@ -76,6 +77,11 @@ resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWeb
       FollowRedirects: false
       HttpVerb: 'Get'
       RequestUrl: appInsights_webTestUrl
+      ParseDependentRequests: false
+    }
+    ValidationRules: {
+      ExpectedHttpStatusCode: 200
+      SSLCheck:false
     }
     Locations: [
       {
