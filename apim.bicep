@@ -34,7 +34,7 @@ param availabilityZones array = [
 param AppInsightsName string = ''
 
 
-var apiManagementServiceName = 'apim-${nameSeed}-${uniqueString(resourceGroup().id, nameSeed)}'
+var apiManagementServiceName = 'apim-${nameSeed}-${substring(sku,0,3)}-${uniqueString(resourceGroup().id, nameSeed)}'
 
 resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
   name: apiManagementServiceName
