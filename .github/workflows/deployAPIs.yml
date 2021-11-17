@@ -59,6 +59,10 @@ jobs:
                 APIM='apim-icecreamblue-3plwdf5dpxexw'
           fi
           
+          echo $RATINGSAPI
+          echo $RG
+          echo $APIM
+          
           echo "::set-output name=RATINGSAPI::$RATINGSAPI"
           echo "::set-output name=RG::$RG"
           echo "::set-output name=APIM::$APIM"
