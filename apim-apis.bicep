@@ -9,6 +9,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' existing = {
   name: apimName
 }
 
+
 resource UserApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
   name: 'GetUsers'
   parent: apim
@@ -49,7 +50,7 @@ resource ProductApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = 
   name: 'ProductAPI'
   parent: apim
   properties: {
-    path: 'users'
+    path: 'products'
     displayName: 'Users API'
     serviceUrl: 'https://serverlessohapi.azurewebsites.net/api/'
     protocols: [
