@@ -6,13 +6,23 @@ on:
     inputs:
       resourcegroup:
         description: "Resource Group to deploy to"
-        required: true
         default: "team2App-devenv"
+        required: true
+        type: choice
+        options: 
+        - team2App-devenv
+        - team2App-bluedevenv
+        - team2App-greendevenv
         
       apimname:
         description: "API Management Instance Name"
-        required: true
         default: "apim-icecream"
+        required: true
+        type: choice
+        options: 
+        - apim-icecream
+        - apim-icecreamgreen-nxwhongiagiiu
+        - apim-icecreamblue-3plwdf5dpxexw
         
 env:
   DEPNAME: "DepApi${{ github.run_number }}" #Deployment Name
