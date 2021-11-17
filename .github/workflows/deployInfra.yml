@@ -30,6 +30,15 @@ on:
         default: "false"
         required: true
         
+      runner:
+        description: "GitHub runner"
+        default: "ubuntu-latest"
+        required: true
+        type: choice
+        options: 
+        - self-hosted
+        - ubuntu-latest
+        
 env:
   #RG: "team2App-devenv" #The resource group we're deploying to.
   #ParamFilePath: ".github/workflows_dep/AksDeploy-Basic.parameters.json" #Path to parameter file
@@ -41,7 +50,7 @@ concurrency: github.event.inputs.RG
 
 jobs:
   Deploy:
-    runs-on: self-hosted #ubuntu-latest
+    runs-on: ${{ github.event.inputs.runner }} #self-hosted #ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       
