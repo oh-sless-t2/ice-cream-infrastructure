@@ -8,14 +8,18 @@ on:
         description: "Resource Group to deploy to"
         default: "team2App-devenv"
         required: true
+        type: choice
+        options: 
+        - team2App-devenv
+        - team2App-bluedevenv
         
-      AppNameSpeed:
-        description: "App Name Seed"
+      ApiName:
+        description: "Api Name"
         default: "Ratings"
         required: true
         
-      ApimNameSeed:
-        description: "APIM Name Seed"
+      ResNameSeed:
+        description: "Resource Name Seed"
         default: "icecream"
         required: true
         
@@ -38,8 +42,8 @@ jobs:
         run: |       
           echo "RG is: ${{ github.event.inputs.RG }}"
           
-          echo "AppNameSpeed is: ${{ github.event.inputs.AppNameSpeed }}"
-          echo "ApimNameSeed is: ${{ github.event.inputs.ApimNameSeed }}"
+          echo "ApiName is: ${{ github.event.inputs.ApiName }}"
+          echo "ResNameSeed is: ${{ github.event.inputs.ResNameSeed }}"
           echo "Deployment name is ${{ env.DEPNAME }}"
           echo "Ref is ${{ github.ref }}"
           echo "EventTrigger name is ${{github.event_name}}"
@@ -61,10 +65,10 @@ jobs:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
             RG="${{ github.event.inputs.RG }}"
-            RESNAME="${{ github.event.inputs.AppNameSpeed }}"
-            APIMNAMESEED="${{ github.event.inputs.ApimNameSeed }}"
+            RESNAME="${{ github.event.inputs.ApiName }}"
+            ResNameSeed="${{ github.event.inputs.ResNameSeed }}"
 
-            az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME apimNameSeed=$APIMNAMESEED
+            az deployment group validate -f main.bicep -g $RG -p appName=$RESNAME ResNameSeed=$ResNameSeed
           
       - name: Deploy Infrastructure
         id: deployInfra
@@ -73,10 +77,10 @@ jobs:
           azcliversion: ${{ env.AZCLIVERSION }}
           inlineScript: |
             RG="${{ github.event.inputs.RG }}"
-            RESNAME="${{ github.event.inputs.AppNameSpeed }}"
-            APIMNAMESEED="${{ github.event.inputs.ApimNameSeed }}"
+            RESNAME="${{ github.event.inputs.ApiName }}"
+            ResNameSeed="${{ github.event.inputs.ResNameSeed }}"
             
-            az deployment group create -f main.bicep -g $RG -p appName=$RESNAME  apimNameSeed=$APIMNAMESEED --name $DEPNAME 
+            az deployment group create -f main.bicep -g $RG -p appName=$RESNAME  ResNameSeed=$ResNameSeed --name $DEPNAME 
             
             DEPSTATUS=$(az deployment operation group list --resource-group $RG --name $DEPNAME) #--query "[?properties.provisioningState=='Failed']"
             echo $DEPSTATUS
