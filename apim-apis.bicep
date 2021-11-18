@@ -17,6 +17,31 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!e
   name: AppInsightsName
 }
 
+resource ApimLogger 'Microsoft.ApiManagement/service/loggers@2021-04-01-preview' = {
+  name: 'API-Logger'
+  parent: apim
+  properties: {
+    loggerType: 'applicationInsights'
+    resourceId: AppInsights.id
+    credentials: {
+      'instrumentationKey': AppInsights.properties.InstrumentationKey
+    }
+    description: 'Application Insights telemetry from APIs'
+  }
+}
+
+var ApiLoggingProperties = {
+  alwaysLog: 'allErrors'
+  httpCorrelationProtocol: 'Legacy'
+  verbosity: 'information'
+  logClientIp: true
+  loggerId: ApimLogger.id
+  sampling: {
+    samplingType: 'fixed'
+    percentage: 100
+  }
+}
+
 resource UserApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
   name: 'GetUsers'
   parent: apim
@@ -29,6 +54,12 @@ resource UserApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = {
     ]
     subscriptionRequired: false
   }
+}
+
+resource UserApiDiags 'Microsoft.ApiManagement/service/apis/diagnostics@2021-04-01-preview' = {
+  name: 'applicationinsights'
+  parent: UserApi
+  properties: ApiLoggingProperties
 }
 
 resource GetUsersMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
@@ -65,6 +96,12 @@ resource ProductApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = 
     ]
     subscriptionRequired: false
   }
+}
+
+resource ProductApiDiags 'Microsoft.ApiManagement/service/apis/diagnostics@2021-04-01-preview' = {
+  name: 'applicationinsights'
+  parent: ProductApi
+  properties: ApiLoggingProperties
 }
 
 resource GetProductsMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {
@@ -121,6 +158,12 @@ resource RatingsApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = 
     ]
     subscriptionRequired: false
   }
+}
+
+resource RatingsApiDiags 'Microsoft.ApiManagement/service/apis/diagnostics@2021-04-01-preview' = {
+  name: 'applicationinsights'
+  parent: RatingsApi
+  properties: ApiLoggingProperties
 }
 
 resource GetRatingsMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-preview' = {

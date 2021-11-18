@@ -17,6 +17,8 @@ param publisherName string = 'Gobyers'
 ])
 param sku string = 'Consumption'
 
+param useRedisCache bool = true
+
 @description('The email address of the owner of the service')
 @minLength(1)
 param publisherEmail string = 'gdogg@microsoft.com'
@@ -76,6 +78,44 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!e
   name: AppInsightsName
 }
 
+resource redis 'Microsoft.Cache/redis@2020-12-01' = if(useRedisCache) {
+  name: 'apim-cache-${nameSeed}'
+  location: resourceGroup().location
+  properties: {
+    sku: {
+      capacity: 0
+      family: 'C'
+      name: 'Basic'
+    }
+    redisVersion: '6'
+    minimumTlsVersion: '1.2'
+  }
+}
+
+var redisconnectionstring = '${redis.properties.hostName}:${redis.properties.port},password=${listKeys(redis.id,'2020-12-01').primaryKey},ssl=True,abortConnect=False'
+output redisconnstr string = redisconnectionstring
+
+resource apimcache 'Microsoft.ApiManagement/service/caches@2020-12-01' = {
+  name: redis.name
+  parent: apim
+  properties: {
+    connectionString: redisconnectionstring
+    useFromLocation: resourceGroup().location
+    description: 'Azure Redis'
+    //resourceId: redis.id
+  }
+}
+
+// resource apimcache 'Microsoft.ApiManagement/service/caches@2021-04-01-preview' = {
+//   name: 'cache'
+//   parent: apim
+//   properties: {
+//     useFromLocation: 'default'
+//     description: 'redis cache'
+//     connectionString: first(listKeys(redis.id,'2020-12-01')).primaryKey
+//   }
+// }
+
 // Create Logger and link logger
 resource apimLogger 'Microsoft.ApiManagement/service/loggers@2019-12-01' = {
   name: '${apim.name}/${apim.name}-logger'
@@ -85,5 +125,6 @@ resource apimLogger 'Microsoft.ApiManagement/service/loggers@2019-12-01' = {
     credentials:{
       instrumentationKey: AppInsights.properties.InstrumentationKey
     }
+    description: 'APIM logger for Application Insights'
   }
 }
