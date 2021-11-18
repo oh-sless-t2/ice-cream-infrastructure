@@ -79,7 +79,7 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!e
 }
 
 resource redis 'Microsoft.Cache/redis@2020-12-01' = if(useRedisCache) {
-  name: 'apim-cache-${nameSeed}'
+  name: 'redis-${nameSeed}'
   location: resourceGroup().location
   properties: {
     sku: {
@@ -91,30 +91,21 @@ resource redis 'Microsoft.Cache/redis@2020-12-01' = if(useRedisCache) {
     minimumTlsVersion: '1.2'
   }
 }
+output redishostnmame string = redis.properties.hostName
 
 var redisconnectionstring = '${redis.properties.hostName}:${redis.properties.port},password=${listKeys(redis.id,'2020-12-01').primaryKey},ssl=True,abortConnect=False'
-output redisconnstr string = redisconnectionstring
+var redisfullresourceid = '${environment().resourceManager}${substring(redis.id,1)}'
 
 resource apimcache 'Microsoft.ApiManagement/service/caches@2020-12-01' = {
-  name: redis.name
+  name: resourceGroup().location
   parent: apim
   properties: {
     connectionString: redisconnectionstring
     useFromLocation: resourceGroup().location
-    description: 'Azure Redis'
-    //resourceId: redis.id
+    description: redis.properties.hostName
+    resourceId: redisfullresourceid
   }
 }
-
-// resource apimcache 'Microsoft.ApiManagement/service/caches@2021-04-01-preview' = {
-//   name: 'cache'
-//   parent: apim
-//   properties: {
-//     useFromLocation: 'default'
-//     description: 'redis cache'
-//     connectionString: first(listKeys(redis.id,'2020-12-01')).primaryKey
-//   }
-// }
 
 // Create Logger and link logger
 resource apimLogger 'Microsoft.ApiManagement/service/loggers@2019-12-01' = {
