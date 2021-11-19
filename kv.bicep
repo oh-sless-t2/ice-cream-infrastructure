@@ -2,6 +2,8 @@
 @minLength(3)
 param nameSeed string
 
+param enableSoftDelete bool = true
+
 param apimUaiName string
 param fnAppUaiName string
 
@@ -48,7 +50,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' =  {
         }
       }
     ]
-    enableSoftDelete: true
+    enableSoftDelete: enableSoftDelete
   }
 }
 

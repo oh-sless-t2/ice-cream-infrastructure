@@ -1,3 +1,4 @@
+//Automation Note: APIM has softdelete protection on by default. You need to explicitly delete, if redeploying with the same name. az rest --method delete --header "Accept=applicaiton/json" -u 'https://management.azure.com/subscriptions/{subId}/providers/Microsoft.ApiManagement/locations/{region}/deletedservices/{apim}?api-version=2020-06-01-preview'
 @description('Used in the naming of Az resources')
 @minLength(3)
 param nameSeed string
@@ -38,7 +39,7 @@ param AppInsightsName string = ''
 
 var apiManagementServiceName = 'apim-${nameSeed}-${substring(sku,0,3)}-${uniqueString(resourceGroup().id, nameSeed)}'
 
-resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' = {
+resource apim 'Microsoft.ApiManagement/service@2021-04-01-preview' = {
   name: apiManagementServiceName
   location: location
   sku: {
@@ -78,32 +79,21 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!e
   name: AppInsightsName
 }
 
-resource redis 'Microsoft.Cache/redis@2020-12-01' = if(useRedisCache) {
-  name: 'redis-${nameSeed}'
-  location: resourceGroup().location
-  properties: {
-    sku: {
-      capacity: 0
-      family: 'C'
-      name: 'Basic'
-    }
-    redisVersion: '6'
-    minimumTlsVersion: '1.2'
+module redis 'redis.bicep' = if(useRedisCache) {
+  name: 'apim-redis'
+  params: {
+    nameSeed: nameSeed
   }
 }
-output redishostnmame string = redis.properties.hostName
 
-var redisconnectionstring = '${redis.properties.hostName}:${redis.properties.port},password=${listKeys(redis.id,'2020-12-01').primaryKey},ssl=True,abortConnect=False'
-var redisfullresourceid = '${environment().resourceManager}${substring(redis.id,1)}'
-
-resource apimcache 'Microsoft.ApiManagement/service/caches@2020-12-01' = {
+resource apimcache 'Microsoft.ApiManagement/service/caches@2021-04-01-preview' = if(useRedisCache) {
   name: resourceGroup().location
   parent: apim
   properties: {
-    connectionString: redisconnectionstring
+    connectionString: redis.outputs.redisconnectionstring
     useFromLocation: resourceGroup().location
-    description: redis.properties.hostName
-    resourceId: redisfullresourceid
+    description: redis.outputs.redishostnmame
+    resourceId: redis.outputs.redisfullresourceid
   }
 }
 

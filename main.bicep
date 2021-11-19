@@ -5,7 +5,8 @@ param appName string = 'ratings'
 param resNameSeed string = 'icecream'
 
 @description('Name of the CosmosDb Account')
-param databaseAccountId string = toLower('db-${resNameSeed}')
+param cosmosDbName string = toLower('db-${resNameSeed}-${uniqueString(resourceGroup().id, appName)}')
+param cosmosDbResourceGroupName string = resourceGroup().name
 
 @allowed([
   'Developer'
@@ -18,6 +19,9 @@ param apiManagementSku string = 'Consumption'
 param restrictTrafficToJustAPIM bool = false
 
 param deployWebTests bool =true
+
+@description('Soft Delete protects your Vault contents and should be used for serious environments')
+param enableKeyVaultSoftDelete bool = true
 
 //Making the name unique - if this fails, it's because the name is already taken (and you're really unlucky!)
 var webAppName = 'app-${appName}-${uniqueString(resourceGroup().id, appName)}'
@@ -119,8 +123,9 @@ resource log 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
 
 module cosmos 'cosmos-sql.bicep' = { 
   name: 'cosmosDb'
+  scope: resourceGroup(cosmosDbResourceGroupName)
   params: {
-    databaseAccountId: databaseAccountId
+    databaseAccountId: cosmosDbName
     databaseName: 'icecream'
     collectionName:'ratings'
     partitionkey: 'productId'
@@ -132,6 +137,7 @@ module akv 'kv.bicep' = {
   name: 'keyvault'
   params: {
     nameSeed: 'kvicecream'
+    enableSoftDelete: enableKeyVaultSoftDelete
     apimUaiName:  apim.outputs.apimUaiName
     fnAppUaiName: fnAppUai.name
     secretName: 'RatingsCosmosDbConnectionString'
