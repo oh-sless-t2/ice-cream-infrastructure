@@ -4,10 +4,6 @@ param appName string = 'ratings'
 @description('The name seed for all your other resources.')
 param resNameSeed string = 'icecream'
 
-@description('Name of the CosmosDb Account')
-param cosmosDbName string = toLower('db-${resNameSeed}-${uniqueString(resourceGroup().id, appName)}')
-param cosmosDbResourceGroupName string = resourceGroup().name
-
 @allowed([
   'Developer'
   'Premium'
@@ -42,7 +38,7 @@ module functionApp 'functionapp.bicep' = {
     appName: appName
     AppInsightsName: AppInsights.name
     CosmosConnectionString: kv_cosmosconnectionstring //cosmos.outputs.connstr
-    restrictTrafficToJustAPIM: restrictTrafficToJustAPIM 
+    restrictTrafficToJustAPIM: restrictTrafficToJustAPIM
     fnAppIdentityName: fnAppUai.name
   }
 }
@@ -121,18 +117,46 @@ resource log 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   }
 }
 
-module cosmos 'cosmos-sql.bicep' = { 
+// --------------CosmosDb-----------------------
+@description('Name of the CosmosDb Account')
+param cosmosDbAccountName string = 'db-${resNameSeed}-${uniqueString(resourceGroup().id, appName)}'
+var cleanCosmosDbName = toLower(cosmosDbAccountName)
+param cosmosDbResourceGroupName string = resourceGroup().name
+
+@allowed([
+  'Provisioned'
+  'Serverless'
+])
+param cosmosDbCapacityMode string = 'Serverless'
+param cosmosDbFreeTier bool = false
+
+module cosmos 'cosmos-sql.bicep' = {
   name: 'cosmosDb'
   scope: resourceGroup(cosmosDbResourceGroupName)
   params: {
-    databaseAccountId: cosmosDbName
+    databaseAccountName: cleanCosmosDbName
     databaseName: 'icecream'
     collectionName:'ratings'
     partitionkey: 'productId'
-    fnAppUaiName: fnAppUai.name
+    AppIdentityName: fnAppUai.name
+    AppIdentityRG: resourceGroup().name
+    capacityMode: cosmosDbCapacityMode
+    freeTier: cosmosDbFreeTier
   }
 }
 
+// Can't make assignment here.  Scope problem. Need to be in the CosmosRG (module)
+// resource cosmosReadWriteAppAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2021-03-01-preview' =  {
+//   name: '${cleanCosmosDbName}/${guid(resourceGroup().id, fnAppIdentityName)}'
+//   properties: {
+//     principalId: fnAppUai.properties.principalId
+//     roleDefinitionId: cosmos.outputs.readWriteRoleAppAssignmentId
+//     scope: cosmos.outputs.accountId
+//   }
+// }
+
+
+// --------------Key Vault-----------------------
 module akv 'kv.bicep' = {
   name: 'keyvault'
   params: {
@@ -145,6 +169,7 @@ module akv 'kv.bicep' = {
   }
 }
 
+// --------------API Management-----------------------
 module apim 'apim.bicep' =  {
   name: 'apim'
   params: {
@@ -154,13 +179,24 @@ module apim 'apim.bicep' =  {
   }
 }
 
-//Some APIM SKU's don't seem to like the fast follow deployment of API's
-//Do this part in another pipeline calling the bicep file
-//I mean they have a different lifecycle anyway :)
+@description('This bicep module is split out as its lifecycle will be independant, post initial deployment')
 module apis 'apim-apis.bicep' = {
   name: 'apim-apis'
   params: {
     apimName: apim.outputs.ApimName
     AppInsightsName: AppInsights.name
+  }
+}
+
+// --------------------Load testing-------------------
+param createLoadTests bool = true
+param loadTestOwnerObjectId string = ''
+module loadtest 'loadtest.bicep' = if(createLoadTests) {
+  name: 'loadtest'
+  params: {
+    loadtestname: '${appName}-test'
+    LoadTestTargetUrl: functionApp.outputs.appUrl
+    location: 'eastus' //public preview region
+    loadTestOwnerUser: loadTestOwnerObjectId
   }
 }

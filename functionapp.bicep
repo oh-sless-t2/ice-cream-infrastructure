@@ -143,7 +143,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
 }
 
-
 resource hostingPlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: hostingPlanName
   location: resourceGroup().location
