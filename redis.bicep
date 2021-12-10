@@ -15,7 +15,33 @@ resource redis 'Microsoft.Cache/redis@2020-12-01' = {
     minimumTlsVersion: '1.2'
   }
 }
-output redishostnmame string = redis.properties.hostName
 
-output redisconnectionstring string = '${redis.properties.hostName}:${redis.properties.port},password=${listKeys(redis.id,'2020-12-01').primaryKey},ssl=True,abortConnect=False'
+@description('Log Analytics ResourceId')
+param logId string
+
+@description('Diagnostic categories to log')
+param logCategory array = [
+  'ConnectedClientList'
+]
+
+resource diags 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'aksDiags'
+  scope: redis
+  properties: {
+    workspaceId: logId
+    logs: [for diagCategory in logCategory: {
+      category: diagCategory
+      enabled: true
+    }]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+      }
+    ]
+  }
+}
+
+output redishostnmame string = redis.properties.hostName
+output redisconnectionstring string = '${redis.properties.hostName}:${redis.properties.sslPort},password=${listKeys(redis.id,'2020-12-01').primaryKey},ssl=True,abortConnect=False'
 output redisfullresourceid string = '${environment().resourceManager}${substring(redis.id,1)}'

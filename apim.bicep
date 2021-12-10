@@ -34,6 +34,9 @@ param availabilityZones array = [
   '3'
 ]
 
+@description('Log Analytics ResourceId')
+param logId string
+
 param AppInsightsName string = ''
 
 
@@ -83,6 +86,7 @@ module redis 'redis.bicep' = if(useRedisCache) {
   name: 'apim-redis'
   params: {
     nameSeed: nameSeed
+    logId: logId
   }
 }
 

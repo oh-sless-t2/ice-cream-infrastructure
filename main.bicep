@@ -176,6 +176,7 @@ module apim 'apim.bicep' =  {
     nameSeed: resNameSeed
     AppInsightsName: AppInsights.name
     sku: apiManagementSku
+    logId: log.id
   }
 }
 
@@ -189,7 +190,7 @@ module apis 'apim-apis.bicep' = {
 }
 
 // --------------------Load testing-------------------
-param createLoadTests bool = true
+param createLoadTests bool = false
 param loadTestOwnerObjectId string = ''
 module loadtest 'loadtest.bicep' = if(createLoadTests) {
   name: 'loadtest'
