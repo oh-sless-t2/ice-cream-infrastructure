@@ -82,7 +82,7 @@ resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/container
 }
 
 output accountId string = cosmosDbDatabase.id
-output connstr string = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${databaseAccountName}', '2015-04-08').connectionStrings).connectionString
+//output connstr string = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${databaseAccountName}', '2015-04-08').connectionStrings).connectionString
 output accountName string = cosmosDbAccount.name
 
 var readWriteRoleDefinitionId = guid(cosmosDbAccount.name, 'ReadWriteRole')

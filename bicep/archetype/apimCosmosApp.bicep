@@ -1,8 +1,13 @@
+/*
+  A single function app that uses CosmosDb, fronted by APIM.
+  As an Archetype there is no specific application information, just the right configuration for a standard App deployment.
+*/
+
 @description('The name seed for your functionapp. Check outputs for the actual name and url')
-param appName string = 'ratings'
+param appName string
 
 @description('The name seed for all your other resources.')
-param resNameSeed string = 'icecream'
+param resNameSeed string
 
 @allowed([
   'Developer'
@@ -14,16 +19,15 @@ param apiManagementSku string = 'Consumption'
 @description('Restricts inbound traffic to your functionapp, to just from APIM')
 param restrictTrafficToJustAPIM bool = false
 
-param deployWebTests bool =true
+//param deployWebTests bool =true
 
 @description('Soft Delete protects your Vault contents and should be used for serious environments')
 param enableKeyVaultSoftDelete bool = true
 
-//Making the name unique - if this fails, it's because the name is already taken (and you're really unlucky!)
+@description('Needs to be unique as ends up as a public endpoint')
 var webAppName = 'app-${appName}-${uniqueString(resourceGroup().id, appName)}'
-//var storageAccountName = substring(toLower('stor${appName}${uniqueString(resourceGroup().id, appName)}'),0,23)
-param fnAppIdentityName string = 'id-app-${appName}-${uniqueString(resourceGroup().id, appName)}'
 
+param fnAppIdentityName string = 'id-app-${appName}-${uniqueString(resourceGroup().id, appName)}'
 
 //Creating the function App identity here as otherwise it'll cause circular problems
 resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
@@ -31,91 +35,88 @@ resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
   location: resourceGroup().location
 }
 
+// --------------------Function App-------------------
+param AppGitRepoUrl string
 var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${akv.outputs.secretUriWithVersion})'
-module functionApp 'functionapp.bicep' = {
+module functionApp '../foundation/functionapp.bicep' = {
   name: 'functionApp-${appName}'
   params: {
     appName: appName
-    AppInsightsName: AppInsights.name
-    CosmosConnectionString: kv_cosmosconnectionstring //cosmos.outputs.connstr
+    webAppName: webAppName
+    AppInsightsName: appInsights.outputs.name
+    CosmosConnectionString: kv_cosmosconnectionstring
     restrictTrafficToJustAPIM: restrictTrafficToJustAPIM
     fnAppIdentityName: fnAppUai.name
+    repoUrl: AppGitRepoUrl
   }
 }
 
-resource AppInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: webAppName
-  location: resourceGroup().location
-  kind: 'web'
-  tags: {
-    //This looks nasty, but see here: https://github.com/Azure/bicep/issues/555
-    'hidden-link:${resourceGroup().id}/providers/Microsoft.Web/sites/${webAppName}': 'Resource'
-  }
-  properties: {
-    Application_Type: 'web'
-    WorkspaceResourceId: log.id
-    IngestionMode: 'LogAnalytics'
+// --------------------App Insights-------------------
+module appInsights '../foundation/appinsights.bicep' = {
+  name: 'appinsights-${appName}'
+  params: {
+    appName: webAppName
+    logAnalyticsId: log.outputs.id
   }
 }
+output AppInsightsName string = appInsights.outputs.name
 
-var appInsights_webTestUrl = 'https://${functionApp.outputs.appUrl}/api/GetRatings/cc20a6fb-a91f-4192-874d-132493685376'
-resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWebTests) {
-  name: 'TestRatingsAPI'
-  location: resourceGroup().location
-  kind: 'ping'
-    tags: {
-    'hidden-link:${AppInsights.id}': 'Resource'
-  }
-  properties: {
-    Name: 'TestRatingsAPI'
-    Kind: 'standard'
-    SyntheticMonitorId: 'TestRatingsAPI'
-    Frequency: 300
-    Timeout: 30
-    Enabled:true
-    Request: {
-      FollowRedirects: false
-      HttpVerb: 'Get'
-      RequestUrl: appInsights_webTestUrl
-      ParseDependentRequests: false
-    }
-    ValidationRules: {
-      ExpectedHttpStatusCode: 200
-      SSLCheck:false
-    }
-    Locations: [
-      {
-        Id: 'emea-nl-ams-azr'
-      }
-      {
-        Id: 'emea-se-sto-edge'
-      }
-      {
-        Id: 'emea-ru-msa-edge'
-      }
-      {
-        Id: 'emea-gb-db3-azr'
-      }
-      {
-        Id: 'emea-ch-zrh-edge'
-      }
-    ]
+// --------------------Log Analytics-------------------
+module log '../foundation/loganalytics.bicep' = {
+  name: 'log-${resNameSeed}'
+  params: {
+    resNameSeed: resNameSeed
+    retentionInDays: 30
   }
 }
 
 
-@description('The Log Analytics retention period')
-param retentionInDays int = 30
+// var appInsights_webTestUrl = 'https://${functionApp.outputs.appUrl}/api/GetRatings/cc20a6fb-a91f-4192-874d-132493685376'
+// resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWebTests) {
+//   name: 'TestRatingsAPI'
+//   location: resourceGroup().location
+//   kind: 'ping'
+//     tags: {
+//     'hidden-link:${appInsights.outputs.id}': 'Resource'
+//   }
+//   properties: {
+//     Name: 'TestRatingsAPI'
+//     Kind: 'standard'
+//     SyntheticMonitorId: 'TestRatingsAPI'
+//     Frequency: 300
+//     Timeout: 30
+//     Enabled:true
+//     Request: {
+//       FollowRedirects: false
+//       HttpVerb: 'Get'
+//       RequestUrl: appInsights_webTestUrl
+//       ParseDependentRequests: false
+//     }
+//     ValidationRules: {
+//       ExpectedHttpStatusCode: 200
+//       SSLCheck:false
+//     }
+//     Locations: [
+//       {
+//         Id: 'emea-nl-ams-azr'
+//       }
+//       {
+//         Id: 'emea-se-sto-edge'
+//       }
+//       {
+//         Id: 'emea-ru-msa-edge'
+//       }
+//       {
+//         Id: 'emea-gb-db3-azr'
+//       }
+//       {
+//         Id: 'emea-ch-zrh-edge'
+//       }
+//     ]
+//   }
+// }
 
-var log_name = 'log-${resNameSeed}'
 
-resource log 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
-  name: log_name
-  location: resourceGroup().location
-  properties: {
-    retentionInDays: retentionInDays
-  }
-}
 
 // --------------CosmosDb-----------------------
 @description('Name of the CosmosDb Account')
@@ -130,8 +131,8 @@ param cosmosDbResourceGroupName string = resourceGroup().name
 param cosmosDbCapacityMode string = 'Serverless'
 param cosmosDbFreeTier bool = false
 
-module cosmos 'cosmos-sql.bicep' = {
-  name: 'cosmosDb'
+module cosmos '../foundation/cosmos-sql.bicep' = {
+  name: 'cosmosDb-${resNameSeed}'
   scope: resourceGroup(cosmosDbResourceGroupName)
   params: {
     databaseAccountName: cleanCosmosDbName
@@ -157,43 +158,38 @@ module cosmos 'cosmos-sql.bicep' = {
 
 
 // --------------Key Vault-----------------------
-module akv 'kv.bicep' = {
-  name: 'keyvault'
+var cosmosConnString = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${cleanCosmosDbName}', '2015-04-08').connectionStrings).connectionString
+
+module akv '../foundation/kv.bicep' = {
+  name: 'keyvault-${resNameSeed}'
   params: {
     nameSeed: 'kvicecream'
     enableSoftDelete: enableKeyVaultSoftDelete
     apimUaiName:  apim.outputs.apimUaiName
     fnAppUaiName: fnAppUai.name
     secretName: 'RatingsCosmosDbConnectionString'
-    secretValue: cosmos.outputs.connstr
+    secretValue: cosmosConnString
   }
 }
 
 // --------------API Management-----------------------
-module apim 'apim.bicep' =  {
-  name: 'apim'
+module apim '../foundation/apim.bicep' =  {
+  name: 'apim-${resNameSeed}'
   params: {
     nameSeed: resNameSeed
-    AppInsightsName: AppInsights.name
+    AppInsightsName: appInsights.outputs.name
     sku: apiManagementSku
-    logId: log.id
+    logId: log.outputs.id
   }
 }
-
-@description('This bicep module is split out as its lifecycle will be independant, post initial deployment')
-module apis 'apim-apis.bicep' = {
-  name: 'apim-apis'
-  params: {
-    apimName: apim.outputs.ApimName
-    AppInsightsName: AppInsights.name
-  }
-}
+output ApimName string = apim.outputs.ApimName
+output ApimLoggerId string = apim.outputs.loggerId
 
 // --------------------Load testing-------------------
 param createLoadTests bool = false
 param loadTestOwnerObjectId string = ''
-module loadtest 'loadtest.bicep' = if(createLoadTests) {
-  name: 'loadtest'
+module loadtest '../foundation/loadtest.bicep' = if(createLoadTests) {
+  name: 'loadtest-${resNameSeed}'
   params: {
     loadtestname: '${appName}-test'
     LoadTestTargetUrl: functionApp.outputs.appUrl
