@@ -1,8 +1,13 @@
+/*
+  A single function app that uses CosmosDb, fronted by APIM.
+  As an Archetype there is no specific application information, just the right configuration for a standard App deployment.
+*/
+
 @description('The name seed for your functionapp. Check outputs for the actual name and url')
-param appName string = 'ratings'
+param appName string
 
 @description('The name seed for all your other resources.')
-param resNameSeed string = 'icecream'
+param resNameSeed string
 
 @allowed([
   'Developer'
@@ -19,11 +24,10 @@ param restrictTrafficToJustAPIM bool = false
 @description('Soft Delete protects your Vault contents and should be used for serious environments')
 param enableKeyVaultSoftDelete bool = true
 
-//Making the name unique - if this fails, it's because the name is already taken (and you're really unlucky!)
+@description('Needs to be unique as ends up as a public endpoint')
 var webAppName = 'app-${appName}-${uniqueString(resourceGroup().id, appName)}'
-//var storageAccountName = substring(toLower('stor${appName}${uniqueString(resourceGroup().id, appName)}'),0,23)
-param fnAppIdentityName string = 'id-app-${appName}-${uniqueString(resourceGroup().id, appName)}'
 
+param fnAppIdentityName string = 'id-app-${appName}-${uniqueString(resourceGroup().id, appName)}'
 
 //Creating the function App identity here as otherwise it'll cause circular problems
 resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
@@ -31,27 +35,35 @@ resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
   location: resourceGroup().location
 }
 
+// --------------------Function App-------------------
+param AppGitRepoUrl string
 var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${akv.outputs.secretUriWithVersion})'
-module functionApp 'functionapp.bicep' = {
+module functionApp '../foundation/functionapp.bicep' = {
   name: 'functionApp-${appName}'
   params: {
-    appName: webAppName
-    AppInsightsName: appInsights.name
-    CosmosConnectionString: kv_cosmosconnectionstring //cosmos.outputs.connstr
+    appName: appName
+    webAppName: webAppName
+    AppInsightsName: appInsights.outputs.name
+    CosmosConnectionString: kv_cosmosconnectionstring
     restrictTrafficToJustAPIM: restrictTrafficToJustAPIM
     fnAppIdentityName: fnAppUai.name
+    repoUrl: AppGitRepoUrl
   }
 }
 
-module appInsights 'appinsights.bicep' = {
+// --------------------App Insights-------------------
+module appInsights '../foundation/appinsights.bicep' = {
   name: 'appinsights-${appName}'
   params: {
     appName: webAppName
     logAnalyticsId: log.outputs.id
   }
 }
-module log 'loganalytics.bicep' = {
-  name: 'log-${appName}'
+output AppInsightsName string = appInsights.outputs.name
+
+// --------------------Log Analytics-------------------
+module log '../foundation/loganalytics.bicep' = {
+  name: 'log-${resNameSeed}'
   params: {
     resNameSeed: resNameSeed
     retentionInDays: 30
@@ -119,8 +131,8 @@ param cosmosDbResourceGroupName string = resourceGroup().name
 param cosmosDbCapacityMode string = 'Serverless'
 param cosmosDbFreeTier bool = false
 
-module cosmos 'cosmos-sql.bicep' = {
-  name: 'cosmosDb'
+module cosmos '../foundation/cosmos-sql.bicep' = {
+  name: 'cosmosDb-${resNameSeed}'
   scope: resourceGroup(cosmosDbResourceGroupName)
   params: {
     databaseAccountName: cleanCosmosDbName
@@ -146,43 +158,38 @@ module cosmos 'cosmos-sql.bicep' = {
 
 
 // --------------Key Vault-----------------------
-module akv 'kv.bicep' = {
-  name: 'keyvault'
+var cosmosConnString = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${cleanCosmosDbName}', '2015-04-08').connectionStrings).connectionString
+
+module akv '../foundation/kv.bicep' = {
+  name: 'keyvault-${resNameSeed}'
   params: {
     nameSeed: 'kvicecream'
     enableSoftDelete: enableKeyVaultSoftDelete
     apimUaiName:  apim.outputs.apimUaiName
     fnAppUaiName: fnAppUai.name
     secretName: 'RatingsCosmosDbConnectionString'
-    secretValue: cosmos.outputs.connstr
+    secretValue: cosmosConnString
   }
 }
 
 // --------------API Management-----------------------
-module apim 'apim.bicep' =  {
-  name: 'apim'
+module apim '../foundation/apim.bicep' =  {
+  name: 'apim-${resNameSeed}'
   params: {
     nameSeed: resNameSeed
-    AppInsightsName: appInsights.name
+    AppInsightsName: appInsights.outputs.name
     sku: apiManagementSku
     logId: log.outputs.id
   }
 }
-
-@description('This bicep module is split out as its lifecycle will be independant, post initial deployment')
-module apis 'apim-apis.bicep' = {
-  name: 'apim-apis'
-  params: {
-    apimName: apim.outputs.ApimName
-    AppInsightsName: appInsights.name
-  }
-}
+output ApimName string = apim.outputs.ApimName
+output ApimLoggerId string = apim.outputs.loggerId
 
 // --------------------Load testing-------------------
 param createLoadTests bool = false
 param loadTestOwnerObjectId string = ''
-module loadtest 'loadtest.bicep' = if(createLoadTests) {
-  name: 'loadtest'
+module loadtest '../foundation/loadtest.bicep' = if(createLoadTests) {
+  name: 'loadtest-${resNameSeed}'
   params: {
     loadtestname: '${appName}-test'
     LoadTestTargetUrl: functionApp.outputs.appUrl

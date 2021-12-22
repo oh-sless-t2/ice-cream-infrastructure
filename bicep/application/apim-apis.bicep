@@ -260,7 +260,7 @@ resource Partners 'Microsoft.ApiManagement/service/products@2019-12-01' = {
   }
 }
 
-module webTestGetProducts 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
+module webTestGetProducts '../foundation/appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
   name: 'ApimWebTest-GetProducts'
   params: {
     Name: '${ProductApi.name}-GetProducts-Apim'
@@ -270,7 +270,7 @@ module webTestGetProducts 'appinsightswebtest.bicep' = if(!empty(AppInsightsName
   }
 }
 
-module webTestGetProductsCached 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
+module webTestGetProductsCached '../foundation/appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
   name: 'ApimWebTest-GetProductsCached'
   params: {
     Name: '${ProductApi.name}-GetProducts-ApimCached'
@@ -279,7 +279,7 @@ module webTestGetProductsCached 'appinsightswebtest.bicep' = if(!empty(AppInsigh
   }
 }
 
-module webTestDirectGetProducts 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
+module webTestDirectGetProducts '../foundation/appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
   name: 'DirectWebTest-GetProducts'
   params: {
     Name: '${ProductApi.name}-GetProducts-Direct'
@@ -288,7 +288,7 @@ module webTestDirectGetProducts 'appinsightswebtest.bicep' = if(!empty(AppInsigh
   }
 }
 
-module webTestGetUsers 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
+module webTestGetUsers '../foundation/appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
   name: 'ApimWebTest-GetUsers'
   params: {
     Name: '${UserApi.name}-GetUsers-Apim'
@@ -297,7 +297,7 @@ module webTestGetUsers 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) 
   }
 }
 
-module webTestDirectGetUsers 'appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
+module webTestDirectGetUsers '../foundation/appinsightswebtest.bicep' = if(!empty(AppInsightsName)) {
   name: 'DirectWebTest-GetUsers'
   params: {
     Name: '${UserApi.name}-GetUsers-Direct'
@@ -308,7 +308,7 @@ module webTestDirectGetUsers 'appinsightswebtest.bicep' = if(!empty(AppInsightsN
 
 // resource PartnerRateLimit 'Microsoft.ApiManagement/service/policies@2021-04-01-preview' = {
 //   name: 'ExternalPartners'
-  
+
 //   parent: apim
 //   properties: {
 

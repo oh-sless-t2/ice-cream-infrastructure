@@ -102,7 +102,8 @@ resource apimcache 'Microsoft.ApiManagement/service/caches@2021-04-01-preview' =
 }
 
 // Create Logger and link logger
-resource apimLogger 'Microsoft.ApiManagement/service/loggers@2019-12-01' = {
+param createLogger bool = true
+resource apimLogger 'Microsoft.ApiManagement/service/loggers@2019-12-01' = if(createLogger) {
   name: '${apim.name}/${apim.name}-logger'
   properties:{
     resourceId: AppInsights.id
@@ -113,3 +114,4 @@ resource apimLogger 'Microsoft.ApiManagement/service/loggers@2019-12-01' = {
     description: 'APIM logger for Application Insights'
   }
 }
+output loggerId string = createLogger ? apimLogger.id : ''

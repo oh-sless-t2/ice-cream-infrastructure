@@ -19,3 +19,4 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 output id string = AppInsights.id
+output name string = AppInsights.name
