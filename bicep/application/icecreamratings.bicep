@@ -1,52 +1,51 @@
-
 @description('The name seed for all your other resources.')
-param resNameSeed string = 'icecream'
+param resNameSeed string = 'icecram'
 
+@description('The application name of the Function App')
+param appName string = 'ratings'
+
+@allowed([
+  'dev'
+  'prod'
+])
+param environment string = 'dev'
+
+param cosmosDbCollecionName string = appName
+
+var isProdEnvironment = environment == 'prod'
 @description('Creating the serverless app stack')
 module serverlessapp '../archetype/apimCosmosApp.bicep' = {
   name: 'serverlessapp-${resNameSeed}'
   params: {
     resNameSeed: resNameSeed
-    appName: 'ratings'
+    appName: appName
     apiManagementSku: 'Consumption'
     AppGitRepoUrl: 'https://github.com/oh-sless-t2/ice-cream-rating-api'
+    enableKeyVaultSoftDelete: isProdEnvironment
+    cosmosDbDatabaseName: 'icecream'
+    cosmosDbCollectionName: cosmosDbCollecionName
+    cosmosDbPartitionKey: 'productId'
   }
 }
 
-@description('Creating APIs in APIM for the app')
-module apis 'apim-apis.bicep' = {
+@description('Create a web test on the functionApp')
+module webTest '../foundation/appinsightswebtest.bicep' = {
+  name: 'WebTest-${appName}'
+  params: {
+    Name: appName
+    AppInsightsName: serverlessapp.outputs.AppInsightsName
+    WebTestUrl:  'https://${ serverlessapp.outputs.ApplicationUrl}/api/GetRatings/cc20a6fb-a91f-4192-874d-132493685376'
+  }
+}
+
+@description('Creating application specific APIM configuration')
+module apis 'icecreamratings-apimspec.bicep' = {
   name: 'apim-apis'
   params: {
+    resNameSeed: resNameSeed
     apimName: serverlessapp.outputs.ApimName
-    AppInsightsName: serverlessapp.outputs.AppInsightsName
-  }
-}
-
-@description('Creating APIs in APIM for the app')
-module userApi '../foundation/apim-api.bicep' = {
-  name: 'userApi-apim-${resNameSeed}'
-  params: {
-    apimName: serverlessapp.outputs.ApimName
+    appInsightsName: serverlessapp.outputs.AppInsightsName
     apimLoggerId: serverlessapp.outputs.ApimLoggerId
-    AppInsightsName: serverlessapp.outputs.AppInsightsName
-    servicename: 'Users2'
-    baseUrl: 'https://serverlessohapi.azurewebsites.net/api/'
-    serviceApimPath: 'users2'
-    serviceDisplayName: 'Users API2'
-    apis: [
-      {
-        method: 'GET'
-        urlTemplate: '/GetUsers'
-        displayName : 'Get Users'
-        name: 'GetUsers'
-      }
-      {
-        method: 'GET'
-        urlTemplate: '/GetUser'
-        displayName : 'Get User'
-        name: 'GetUser'
-      }
-    ]
-
+    ratingsApiBaseUrl: 'https://${ serverlessapp.outputs.ApplicationUrl}/api/'
   }
 }

@@ -1,3 +1,8 @@
+/*
+  This modules works great for adding simple API's.
+  For more complex API's (eg. POST requests leveraging URL Template Parameteres, using this module makes little sense)
+*/
+
 param baseUrl string
 param servicename string
 param serviceApimPath string
@@ -78,5 +83,23 @@ resource apiMethod 'Microsoft.ApiManagement/service/apis/operations@2021-04-01-p
     method: api.method
     urlTemplate: api.urlTemplate
     description: api.displayName
+  }
+}]
+
+module webTest '../foundation/appinsightswebtest.bicep' = [for api in apis: if(!empty(AppInsightsName))  {
+  name: 'DirectWebTest-${api.name}'
+  params: {
+    Name: '${api.name}-GetUsers-Direct'
+    AppInsightsName: AppInsights.name
+    WebTestUrl: '${baseUrl}${api.urlTemplate}'
+  }
+}]
+
+resource cache 'Microsoft.ApiManagement/service/apis/operations/policies@2021-04-01-preview' = [for (api, index) in apis: if(contains(api, 'enableCache') && api.enableCache) {
+  name: 'policy'
+  parent: apiMethod[index]
+  properties: {
+    value: 'https://raw.githubusercontent.com/Gordonby/Snippets/master/AzureApimPolicies/CacheFor3600.xml'
+    format: 'xml-link'
   }
 }]

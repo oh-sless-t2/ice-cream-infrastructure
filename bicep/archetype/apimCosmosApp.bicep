@@ -14,12 +14,11 @@ param resNameSeed string
   'Premium'
   'Consumption'
 ])
+@description('The Sku of APIM thats appropriate for the App')
 param apiManagementSku string = 'Consumption'
 
 @description('Restricts inbound traffic to your functionapp, to just from APIM')
 param restrictTrafficToJustAPIM bool = false
-
-//param deployWebTests bool =true
 
 @description('Soft Delete protects your Vault contents and should be used for serious environments')
 param enableKeyVaultSoftDelete bool = true
@@ -27,16 +26,21 @@ param enableKeyVaultSoftDelete bool = true
 @description('Needs to be unique as ends up as a public endpoint')
 var webAppName = 'app-${appName}-${uniqueString(resourceGroup().id, appName)}'
 
+// --------------------App Identity-------------------
+//Creating the function App identity here as otherwise it'll cause circular problems in the modules
+@description('The Azure Managed Identity Name assigned to the FunctionApp')
 param fnAppIdentityName string = 'id-app-${appName}-${uniqueString(resourceGroup().id, appName)}'
 
-//Creating the function App identity here as otherwise it'll cause circular problems
 resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: fnAppIdentityName
   location: resourceGroup().location
 }
 
 // --------------------Function App-------------------
+@description('The ful publicly accessible external Git(Hub) repo url')
 param AppGitRepoUrl string
+
+@description('Grabbing the KeyVault Connectionstring secret uri')
 var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${akv.outputs.secretUriWithVersion})'
 module functionApp '../foundation/functionapp.bicep' = {
   name: 'functionApp-${appName}'
@@ -50,6 +54,8 @@ module functionApp '../foundation/functionapp.bicep' = {
     repoUrl: AppGitRepoUrl
   }
 }
+@description('The raw ')
+output ApplicationUrl string = functionApp.outputs.appUrl
 
 // --------------------App Insights-------------------
 module appInsights '../foundation/appinsights.bicep' = {
@@ -70,59 +76,15 @@ module log '../foundation/loganalytics.bicep' = {
   }
 }
 
-
-// var appInsights_webTestUrl = 'https://${functionApp.outputs.appUrl}/api/GetRatings/cc20a6fb-a91f-4192-874d-132493685376'
-// resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = if(deployWebTests) {
-//   name: 'TestRatingsAPI'
-//   location: resourceGroup().location
-//   kind: 'ping'
-//     tags: {
-//     'hidden-link:${appInsights.outputs.id}': 'Resource'
-//   }
-//   properties: {
-//     Name: 'TestRatingsAPI'
-//     Kind: 'standard'
-//     SyntheticMonitorId: 'TestRatingsAPI'
-//     Frequency: 300
-//     Timeout: 30
-//     Enabled:true
-//     Request: {
-//       FollowRedirects: false
-//       HttpVerb: 'Get'
-//       RequestUrl: appInsights_webTestUrl
-//       ParseDependentRequests: false
-//     }
-//     ValidationRules: {
-//       ExpectedHttpStatusCode: 200
-//       SSLCheck:false
-//     }
-//     Locations: [
-//       {
-//         Id: 'emea-nl-ams-azr'
-//       }
-//       {
-//         Id: 'emea-se-sto-edge'
-//       }
-//       {
-//         Id: 'emea-ru-msa-edge'
-//       }
-//       {
-//         Id: 'emea-gb-db3-azr'
-//       }
-//       {
-//         Id: 'emea-ch-zrh-edge'
-//       }
-//     ]
-//   }
-// }
-
-
-
 // --------------CosmosDb-----------------------
 @description('Name of the CosmosDb Account')
 param cosmosDbAccountName string = 'db-${resNameSeed}-${uniqueString(resourceGroup().id, appName)}'
 var cleanCosmosDbName = toLower(cosmosDbAccountName)
 param cosmosDbResourceGroupName string = resourceGroup().name
+
+param cosmosDbDatabaseName string
+param cosmosDbCollectionName string
+param cosmosDbPartitionKey string
 
 @allowed([
   'Provisioned'
@@ -136,9 +98,9 @@ module cosmos '../foundation/cosmos-sql.bicep' = {
   scope: resourceGroup(cosmosDbResourceGroupName)
   params: {
     databaseAccountName: cleanCosmosDbName
-    databaseName: 'icecream'
-    collectionName:'ratings'
-    partitionkey: 'productId'
+    databaseName: cosmosDbDatabaseName
+    collectionName: cosmosDbCollectionName
+    partitionkey: cosmosDbPartitionKey
     AppIdentityName: fnAppUai.name
     AppIdentityRG: resourceGroup().name
     capacityMode: cosmosDbCapacityMode
@@ -146,28 +108,18 @@ module cosmos '../foundation/cosmos-sql.bicep' = {
   }
 }
 
-// Can't make assignment here.  Scope problem. Need to be in the CosmosRG (module)
-// resource cosmosReadWriteAppAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2021-03-01-preview' =  {
-//   name: '${cleanCosmosDbName}/${guid(resourceGroup().id, fnAppIdentityName)}'
-//   properties: {
-//     principalId: fnAppUai.properties.principalId
-//     roleDefinitionId: cosmos.outputs.readWriteRoleAppAssignmentId
-//     scope: cosmos.outputs.accountId
-//   }
-// }
-
-
 // --------------Key Vault-----------------------
+@description('Getting the CosmosDb connection string for secure storage in KeyVault')
 var cosmosConnString = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${cleanCosmosDbName}', '2015-04-08').connectionStrings).connectionString
 
 module akv '../foundation/kv.bicep' = {
   name: 'keyvault-${resNameSeed}'
   params: {
-    nameSeed: 'kvicecream'
+    nameSeed: resNameSeed
     enableSoftDelete: enableKeyVaultSoftDelete
     apimUaiName:  apim.outputs.apimUaiName
     fnAppUaiName: fnAppUai.name
-    secretName: 'RatingsCosmosDbConnectionString'
+    secretName: '${appName}CosmosDbConnectionString'
     secretValue: cosmosConnString
   }
 }
