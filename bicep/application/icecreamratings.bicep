@@ -1,5 +1,5 @@
 @description('The name seed for all your other resources.')
-param resNameSeed string = 'icecr2'
+param resNameSeed string = 'icecr3'
 
 @description('The short application name of the Function App')
 param appName string = 'ratings'
@@ -29,6 +29,7 @@ module serverlessapp '../archetype/apimCosmosApp.bicep' = {
     appName: appName
     apiManagementSku: 'Consumption'
     AppGitRepoUrl: 'https://github.com/oh-sless-t2/ice-cream-rating-api'
+    AppGitRepoStagingBranch: 'staging'
     enableKeyVaultSoftDelete: environmentProtectionAndBackup
     cosmosDbDatabaseName: 'icecream'
     cosmosDbCollectionName: cosmosDbCollecionName

@@ -123,13 +123,25 @@ resource webAppLogging 'Microsoft.Web/sites/config@2021-02-01' = {
   }
 }
 
-param repoUrl string=''
+param repoUrl string = ''
+param repoBranchProduction string = 'main'
 resource codeDeploy 'Microsoft.Web/sites/sourcecontrols@2021-01-15' = if (!empty(repoUrl)) {
   parent: functionApp
   name: 'web'
   properties: {
     repoUrl: repoUrl
-    branch: 'main'
+    branch: repoBranchProduction
+    isManualIntegration: true
+  }
+}
+
+param repoBranchStaging string = ''
+resource slotCodeDeploy 'Microsoft.Web/sites/slots/sourcecontrols@2021-02-01' = if (!empty(repoUrl) && !empty(repoBranchStaging)) {
+  parent: slot
+  name: 'web'
+  properties: {
+    repoUrl: repoUrl
+    branch: repoBranchStaging
     isManualIntegration: true
   }
 }
