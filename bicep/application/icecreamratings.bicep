@@ -1,5 +1,5 @@
 @description('The name seed for all your other resources.')
-param resNameSeed string = 'icecre3'
+param resNameSeed string = 'icecre4'
 
 @description('The application name of the Function App')
 param appName string = 'ratings'

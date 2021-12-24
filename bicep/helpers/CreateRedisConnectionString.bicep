@@ -1,4 +1,6 @@
 /*
+I'm leaving this module here as an anti-pattern reference, it is not good practice as connection strings should not be written to outputs.
+
 This module demonstrates an interesting pattern, where the behaviour of ListKeys is;
 "ListKeys requires a value that can be calculated at the start of the deployment"
 However we need to delay the evaluation of ListKeys until after the resource is created in a module.
