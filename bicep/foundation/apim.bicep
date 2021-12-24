@@ -92,15 +92,7 @@ module redis 'redis.bicep' = if(useRedisCache) {
   }
 }
 
-// module redisConnectionString '../helpers/CreateRedisConnectionString.bicep' = if(useRedisCache) {
-//   name: 'Redis-ConnectionString'
-//   params: {
-//     nameOfSomethingToWaitFor: redis.name
-//     redisName: redisName
-//   }
-// }
-
-@description('We need to use a module for the config to ensure both Redis and APIM have been created to avoid prematurely invoking ListKeys, and to avoid using outputs for keys/secrets')
+@description('We need to use a module for the config to ensure both Redis and APIM have been created to avoid both prematurely invoking ListKeys, and to avoid using outputs for keys/secrets')
 module apimRedisCacheConfig 'apim-cacheconfig.bicep' = if(useRedisCache) {
   name: 'ApimCacheConfig'
   params: {

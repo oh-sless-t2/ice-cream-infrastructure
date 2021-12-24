@@ -133,7 +133,7 @@ resource secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = if (!empty(keyv
   name: keyvaultConnectionStringSecretName
   parent: keyVault
   properties: {
-    value: first(cosmosDbAccount.listConnectionStrings().connectionStrings)
+    value: first(cosmosDbAccount.listConnectionStrings().connectionStrings).connectionString
   }
 }
 output connstrSecretUriWithVersion string = secret.properties.secretUriWithVersion

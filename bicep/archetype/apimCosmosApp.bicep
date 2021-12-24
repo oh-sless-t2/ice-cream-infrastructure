@@ -110,18 +110,6 @@ module cosmos '../foundation/cosmos-sql.bicep' = {
   }
 }
 
-// --------------Key Vault-----------------------
-// @description('Getting the CosmosDb connection string for secure storage in KeyVault as ListConnectionString requires a value that can be calculated at the start of the deployment')
-// module getCosmosDbConnectionString '../helpers/GetConnectionString.bicep' = {
-//   name: 'CosmosDb-GetConnectionString'
-//   params: {
-//     nameOfSomethingToWaitFor: cosmos.outputs.accountId
-//     resourceId: 'Microsoft.DocumentDb/databaseAccounts/${cleanCosmosDbName}'
-//   }
-// }
-
-//var cosmosConnString = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${cosmosRef.id}', '2015-04-08').connectionStrings).connectionString
-
 module akv '../foundation/kv.bicep' = {
   name: 'keyvault-${resNameSeed}'
   params: {
@@ -133,6 +121,12 @@ module akv '../foundation/kv.bicep' = {
     ]
   }
 }
+
+
+// resource appUaiRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+//   name:
+//   scope: akv
+// }
 
 // --------------API Management-----------------------
 module apim '../foundation/apim.bicep' =  {
