@@ -40,6 +40,9 @@ resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
 @description('The ful publicly accessible external Git(Hub) repo url')
 param AppGitRepoUrl string
 
+param AppGitRepoProdBranch string = 'main'
+param AppGitRepoStagingBranch string = ''
+
 @description('Grabbing the KeyVault Connectionstring secret uri')
 var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${cosmos.outputs.connstrSecretUriWithVersion})'
 module functionApp '../foundation/functionapp.bicep' = {
@@ -52,6 +55,8 @@ module functionApp '../foundation/functionapp.bicep' = {
     restrictTrafficToJustAPIM: restrictTrafficToJustAPIM
     fnAppIdentityName: fnAppUai.name
     repoUrl: AppGitRepoUrl
+    repoBranchProduction: AppGitRepoProdBranch
+    repoBranchStaging: AppGitRepoStagingBranch
   }
 }
 @description('The raw ')
