@@ -82,22 +82,22 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!e
   name: AppInsightsName
 }
 
+var redisName = 'redis-${nameSeed}'
 module redis 'redis.bicep' = if(useRedisCache) {
   name: 'apim-redis'
   params: {
     nameSeed: nameSeed
+    redisName: redisName
     logId: logId
   }
 }
 
-resource apimcache 'Microsoft.ApiManagement/service/caches@2021-04-01-preview' = if(useRedisCache) {
-  name: resourceGroup().location
-  parent: apim
-  properties: {
-    connectionString: redis.outputs.redisconnectionstring
-    useFromLocation: resourceGroup().location
-    description: redis.outputs.redishostnmame
-    resourceId: redis.outputs.redisfullresourceid
+@description('We need to use a module for the config to ensure both Redis and APIM have been created to avoid both prematurely invoking ListKeys, and to avoid using outputs for keys/secrets')
+module apimRedisCacheConfig 'apim-cacheconfig.bicep' = if(useRedisCache) {
+  name: 'ApimCacheConfig'
+  params: {
+    redisName: redis.outputs.name
+    apimName: apim.name
   }
 }
 

@@ -4,22 +4,19 @@ param nameSeed string
 
 param enableSoftDelete bool = true
 
-param apimUaiName string
-param fnAppUaiName string
-
-param secretName string = 'AppSecret'
-param secretValue string = 'SecretSquirrel'
+@minLength(1)
+@description('Pass an array of UAI names to give the GET secret access policy')
+param UaiSecretReaderNames array
 
 
-var kvName = substring(replace('kv-${nameSeed}-${uniqueString(resourceGroup().id, nameSeed)}','-',''),0,23)
+var kvRawName = replace('kv-${nameSeed}-${uniqueString(resourceGroup().id, nameSeed)}','-','')
+var kvName = length(kvRawName) > 24 ? substring(kvRawName,0,23) : kvRawName
 
-resource apiUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
-  name: apimUaiName
-}
+resource uais 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing =  [for uai in UaiSecretReaderNames : {
+  name: uai
+}]
 
-resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
-  name: fnAppUaiName
-}
+var tenantId = uais[0].properties.tenantId
 
 resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' =  {
   name: kvName
@@ -29,37 +26,17 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' =  {
       name: 'standard'
       family: 'A'
     }
-    tenantId: apiUai.properties.tenantId
-    accessPolicies: [
-      {
-        tenantId: apiUai.properties.tenantId
-        objectId: apiUai.properties.principalId
+    tenantId: tenantId
+    accessPolicies: [ for (uai, index) in UaiSecretReaderNames : {
+        tenantId: uais[index].properties.tenantId
+        objectId: uais[index].properties.principalId
         permissions: {
           secrets: [
             'get'
           ]
         }
-      }
-      {
-        tenantId: fnAppUai.properties.tenantId
-        objectId: fnAppUai.properties.principalId
-        permissions: {
-          secrets: [
-            'get'
-          ]
-        }
-      }
-    ]
+      }]
     enableSoftDelete: enableSoftDelete
   }
 }
-
-resource secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: secretName
-  parent: keyVault
-  properties: {
-    value: secretValue
-  }
-}
-output secretUriWithVersion string = secret.properties.secretUriWithVersion
-output secretUri string = secret.properties.secretUri
+output name string = kvName

@@ -121,3 +121,20 @@ resource cosmosReadWriteAppAssignment 'Microsoft.DocumentDB/databaseAccounts/sql
     scope: cosmosDbAccount.id
   }
 }
+
+param keyvaultName string = ''
+param keyvaultConnectionStringSecretName string = ''
+
+resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing = if (!empty(keyvaultName) && !empty(keyvaultConnectionStringSecretName)) {
+  name: keyvaultName
+}
+
+resource secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = if (!empty(keyvaultName) && !empty(keyvaultConnectionStringSecretName)) {
+  name: keyvaultConnectionStringSecretName
+  parent: keyVault
+  properties: {
+    value: first(cosmosDbAccount.listConnectionStrings().connectionStrings).connectionString
+  }
+}
+output connstrSecretUriWithVersion string = secret.properties.secretUriWithVersion
+output connstrSecretUri string = secret.properties.secretUri

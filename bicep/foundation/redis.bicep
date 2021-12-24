@@ -2,8 +2,10 @@
 @minLength(3)
 param nameSeed string
 
+param redisName string =  'redis-${nameSeed}'
+
 resource redis 'Microsoft.Cache/redis@2020-12-01' = {
-  name: 'redis-${nameSeed}'
+  name:redisName
   location: resourceGroup().location
   properties: {
     sku: {
@@ -42,6 +44,8 @@ resource diags 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   }
 }
 
-output redishostnmame string = redis.properties.hostName
-output redisconnectionstring string = '${redis.properties.hostName}:${redis.properties.sslPort},password=${listKeys(redis.id,'2020-12-01').primaryKey},ssl=True,abortConnect=False'
+output name string = redis.name
+output hostName string = redis.properties.hostName
+output sslPort int = redis.properties.sslPort
+output id string = redis.id
 output redisfullresourceid string = '${environment().resourceManager}${substring(redis.id,1)}'

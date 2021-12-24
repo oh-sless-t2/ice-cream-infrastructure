@@ -1,52 +1,60 @@
-
 @description('The name seed for all your other resources.')
-param resNameSeed string = 'icecream'
+param resNameSeed string = 'icecre8'
+
+@description('The short application name of the Function App')
+param appName string = 'ratings'
+
+@allowed([
+  'dev' //Small scale, no protection or backup
+  'pre-prod' //Large scale, no protection or backup
+  'prod' //Large scale, with production and backup
+])
+@description('The type of environment being deployed')
+param environment string = 'dev'
+
+@description('The name of the CosmosDb collection to create for the app')
+param cosmosDbCollecionName string = appName
+
+@description('The collection partitionkey')
+param cosmosDbPartitionKey string = 'productId'
+
+@description('Logic to leverage environment protection like SoftDelete')
+var environmentProtectionAndBackup = environment == 'prod'
 
 @description('Creating the serverless app stack')
 module serverlessapp '../archetype/apimCosmosApp.bicep' = {
   name: 'serverlessapp-${resNameSeed}'
   params: {
     resNameSeed: resNameSeed
-    appName: 'ratings'
+    appName: appName
     apiManagementSku: 'Consumption'
     AppGitRepoUrl: 'https://github.com/oh-sless-t2/ice-cream-rating-api'
+    enableKeyVaultSoftDelete: environmentProtectionAndBackup
+    cosmosDbDatabaseName: 'icecream'
+    cosmosDbCollectionName: cosmosDbCollecionName
+    cosmosDbPartitionKey: cosmosDbPartitionKey
+    restrictTrafficToJustAPIM: environment != 'dev'
   }
 }
 
-@description('Creating APIs in APIM for the app')
-module apis 'apim-apis.bicep' = {
+@description('Create a web test on the functionApp itself, will only work if functionApp is not APIM IP restricted (dev environment)')
+module webTest '../foundation/appinsightswebtest.bicep' = if(environment == 'dev') {
+  name: 'WebTest-${appName}'
+  params: {
+    Name: appName
+    AppInsightsName: serverlessapp.outputs.AppInsightsName
+    WebTestUrl:  'https://${ serverlessapp.outputs.ApplicationUrl}/api/GetRatings/cc20a6fb-a91f-4192-874d-132493685376'
+  }
+}
+
+@description('Creating application specific APIM configuration')
+module apis 'icecreamratings-apimspec.bicep' = {
   name: 'apim-apis'
   params: {
+    resNameSeed: resNameSeed
     apimName: serverlessapp.outputs.ApimName
-    AppInsightsName: serverlessapp.outputs.AppInsightsName
-  }
-}
-
-@description('Creating APIs in APIM for the app')
-module userApi '../foundation/apim-api.bicep' = {
-  name: 'userApi-apim-${resNameSeed}'
-  params: {
-    apimName: serverlessapp.outputs.ApimName
+    appInsightsName: serverlessapp.outputs.AppInsightsName
     apimLoggerId: serverlessapp.outputs.ApimLoggerId
-    AppInsightsName: serverlessapp.outputs.AppInsightsName
-    servicename: 'Users2'
-    baseUrl: 'https://serverlessohapi.azurewebsites.net/api/'
-    serviceApimPath: 'users2'
-    serviceDisplayName: 'Users API2'
-    apis: [
-      {
-        method: 'GET'
-        urlTemplate: '/GetUsers'
-        displayName : 'Get Users'
-        name: 'GetUsers'
-      }
-      {
-        method: 'GET'
-        urlTemplate: '/GetUser'
-        displayName : 'Get User'
-        name: 'GetUser'
-      }
-    ]
-
+    ratingsApiBaseUrl: 'https://${ serverlessapp.outputs.ApplicationUrl}/api/'
   }
 }
