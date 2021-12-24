@@ -84,7 +84,7 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!e
 
 var redisName = 'redis-${nameSeed}'
 module redis 'redis.bicep' = if(useRedisCache) {
-  name: 'apim-redis'
+  name: 'redis-apim--${nameSeed}'
   params: {
     nameSeed: nameSeed
     redisName: redisName
@@ -94,7 +94,7 @@ module redis 'redis.bicep' = if(useRedisCache) {
 
 @description('We need to use a module for the config to ensure both Redis and APIM have been created to avoid both prematurely invoking ListKeys, and to avoid using outputs for keys/secrets')
 module apimRedisCacheConfig 'apim-cacheconfig.bicep' = if(useRedisCache) {
-  name: 'ApimCacheConfig'
+  name: 'cacheconfig-apim-${nameSeed}'
   params: {
     redisName: redis.outputs.name
     apimName: apim.name

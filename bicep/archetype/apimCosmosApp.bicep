@@ -43,7 +43,7 @@ param AppGitRepoUrl string
 @description('Grabbing the KeyVault Connectionstring secret uri')
 var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${cosmos.outputs.connstrSecretUriWithVersion})'
 module functionApp '../foundation/functionapp.bicep' = {
-  name: 'functionApp-${appName}'
+  name: 'functionApp-${resNameSeed}'
   params: {
     appName: appName
     webAppName: webAppName
@@ -59,7 +59,7 @@ output ApplicationUrl string = functionApp.outputs.appUrl
 
 // --------------------App Insights-------------------
 module appInsights '../foundation/appinsights.bicep' = {
-  name: 'appinsights-${appName}'
+  name: 'appinsights-${resNameSeed}'
   params: {
     appName: webAppName
     logAnalyticsId: log.outputs.id

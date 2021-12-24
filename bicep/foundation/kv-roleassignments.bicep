@@ -15,7 +15,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing =  {
 @description('Read secret contents. https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#key-vault-secrets-user')
 var keyVaultSecretsUserRole = resourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
 
-resource kvAppGwSecretsUserRole 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = [ for (uai, index) in UaiSecretReaderNames : {
+resource kvAppGwSecretsUserRole 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = [ for (uai, index) in UaiSecretReaderNames : {
   name: '${guid(uais[index].id, keyVault.id, keyVaultSecretsUserRole)}'
   properties: {
     roleDefinitionId: keyVaultSecretsUserRole
