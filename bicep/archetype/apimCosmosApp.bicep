@@ -105,6 +105,8 @@ module cosmos '../foundation/cosmos-sql.bicep' = {
     AppIdentityRG: resourceGroup().name
     capacityMode: cosmosDbCapacityMode
     freeTier: cosmosDbFreeTier
+    keyvaultName: akv.outputs.name
+    keyvaultConnectionStringSecretName: '${appName}CosmosDbConnectionString'
   }
 }
 

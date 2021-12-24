@@ -100,17 +100,12 @@ module redis 'redis.bicep' = if(useRedisCache) {
 //   }
 // }
 
-
-var redisconnectionstring = '${redis.outputs.hostName}:${redis.outputs.sslPort},password=${listKeys('Microsoft.Cache/redis/${redisName}','2020-12-01').primaryKey},ssl=True,abortConnect=False'
-
-resource apimcache 'Microsoft.ApiManagement/service/caches@2021-04-01-preview' = if(useRedisCache) {
-  name: resourceGroup().location
-  parent: apim
-  properties: {
-    useFromLocation: resourceGroup().location
-    description: redis.outputs.hostName
-    resourceId: redis.outputs.redisfullresourceid
-    connectionString: redisconnectionstring
+@description('We need to use a module for the config to ensure both Redis and APIM have been created to avoid prematurely invoking ListKeys, and to avoid using outputs for keys/secrets')
+module apimRedisCacheConfig 'apim-cacheconfig.bicep' = if(useRedisCache) {
+  name: 'ApimCacheConfig'
+  params: {
+    redisName: redis.outputs.name
+    apimName: apim.name
   }
 }
 

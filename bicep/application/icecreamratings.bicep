@@ -1,18 +1,26 @@
 @description('The name seed for all your other resources.')
-param resNameSeed string = 'icecre4'
+param resNameSeed string = 'icecre7'
 
-@description('The application name of the Function App')
+@description('The short application name of the Function App')
 param appName string = 'ratings'
 
 @allowed([
-  'dev'
-  'prod'
+  'dev' //Small scale, no protection or backup
+  'pre-prod' //Large scale, no protection or backup
+  'prod' //Large scale, with production and backup
 ])
+@description('The type of environment being deployed')
 param environment string = 'dev'
 
+@description('The name of the CosmosDb collection to create for the app')
 param cosmosDbCollecionName string = appName
 
-var isProdEnvironment = environment == 'prod'
+@description('The collection partitionkey')
+param cosmosDbPartitionKey string = 'productId'
+
+@description('Logic to leverage environment protection like SoftDelete')
+var environmentProtectionAndBackup = environment == 'prod'
+
 @description('Creating the serverless app stack')
 module serverlessapp '../archetype/apimCosmosApp.bicep' = {
   name: 'serverlessapp-${resNameSeed}'
@@ -21,15 +29,16 @@ module serverlessapp '../archetype/apimCosmosApp.bicep' = {
     appName: appName
     apiManagementSku: 'Consumption'
     AppGitRepoUrl: 'https://github.com/oh-sless-t2/ice-cream-rating-api'
-    enableKeyVaultSoftDelete: isProdEnvironment
+    enableKeyVaultSoftDelete: environmentProtectionAndBackup
     cosmosDbDatabaseName: 'icecream'
     cosmosDbCollectionName: cosmosDbCollecionName
-    cosmosDbPartitionKey: 'productId'
+    cosmosDbPartitionKey: cosmosDbPartitionKey
+    restrictTrafficToJustAPIM: environment != 'dev'
   }
 }
 
-@description('Create a web test on the functionApp')
-module webTest '../foundation/appinsightswebtest.bicep' = {
+@description('Create a web test on the functionApp itself, will only work if functionApp is not APIM IP restricted (dev environment)')
+module webTest '../foundation/appinsightswebtest.bicep' = if(environment == 'dev') {
   name: 'WebTest-${appName}'
   params: {
     Name: appName

@@ -44,6 +44,7 @@ resource diags 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   }
 }
 
+output name string = redis.name
 output hostName string = redis.properties.hostName
 output sslPort int = redis.properties.sslPort
 output id string = redis.id
