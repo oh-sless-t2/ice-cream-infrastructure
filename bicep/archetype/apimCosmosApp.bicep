@@ -115,18 +115,20 @@ module akv '../foundation/kv.bicep' = {
   params: {
     nameSeed: resNameSeed
     enableSoftDelete: enableKeyVaultSoftDelete
+    tenantId: subscription().tenantId
+  }
+}
+
+module akvAssignments '../foundation/kv-roleassignments.bicep' = {
+  name: 'roles-keyvault-${resNameSeed}'
+  params: {
+    kvName: akv.outputs.name
     UaiSecretReaderNames: [
       fnAppUai.name
       apim.outputs.apimUaiName
     ]
   }
 }
-
-
-// resource appUaiRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-//   name:
-//   scope: akv
-// }
 
 // --------------API Management-----------------------
 module apim '../foundation/apim.bicep' =  {
