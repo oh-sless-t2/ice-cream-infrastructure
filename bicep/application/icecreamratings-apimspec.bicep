@@ -10,6 +10,9 @@ param apimProductNames array = [
   'ExternalPartners'
 ]
 
+@description('Enforces requirement for an api subscription key')
+param requireSubscriptionForApis bool = true
+
 @description('Creating a proper reference to APIM')
 resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' existing = {
   name: apimName
@@ -17,7 +20,7 @@ resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' existing = {
 
 @description('[LOOP] Creating all products from an array')
 resource products 'Microsoft.ApiManagement/service/products@2019-12-01' = [ for product in apimProductNames : {
-  name: product
+  name: replace(product,' ', '')
   parent: apim
   properties: {
     approvalRequired: true
@@ -38,6 +41,7 @@ module userApi '../foundation/apim-api.bicep' = {
     baseUrl: 'https://serverlessohapi.azurewebsites.net/api/'
     serviceApimPath: 'users'
     serviceDisplayName: 'Users API'
+    apimSubscriptionRequired: requireSubscriptionForApis
     apis: [
       {
         method: 'GET'
@@ -66,6 +70,7 @@ module productApi '../foundation/apim-api.bicep' = {
     baseUrl: 'https://serverlessohapi.azurewebsites.net/api/'
     serviceApimPath: 'products'
     serviceDisplayName: 'Products API'
+    apimSubscriptionRequired: requireSubscriptionForApis
     apis: [
       {
         method: 'GET'
@@ -116,7 +121,7 @@ resource RatingsApi 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' = 
     protocols: [
       'https'
     ]
-    subscriptionRequired: false
+    subscriptionRequired: requireSubscriptionForApis
   }
 }
 
@@ -172,7 +177,7 @@ resource RatingsAdminApi 'Microsoft.ApiManagement/service/apis@2021-04-01-previe
     protocols: [
       'https'
     ]
-    subscriptionRequired: false
+    subscriptionRequired: requireSubscriptionForApis
   }
 }
 

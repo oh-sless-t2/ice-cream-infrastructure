@@ -109,19 +109,32 @@ module cosmos '../foundation/cosmos-sql.bicep' = {
 }
 
 // --------------Key Vault-----------------------
-@description('Getting the CosmosDb connection string for secure storage in KeyVault')
-var cosmosConnString = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${cleanCosmosDbName}', '2015-04-08').connectionStrings).connectionString
+@description('Getting the CosmosDb connection string for secure storage in KeyVault as ListConnectionString requires a value that can be calculated at the start of the deployment')
+module getCosmosDbConnectionString '../helpers/GetConnectionString.bicep' = {
+  name: 'CosmosDb-GetConnectionString'
+  params: {
+    nameOfSomethingToWaitFor: cosmos.outputs.accountId
+    resourceId: 'Microsoft.DocumentDb/databaseAccounts/${cleanCosmosDbName}'
+  }
+}
+
+//var cosmosConnString = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${cosmosRef.id}', '2015-04-08').connectionStrings).connectionString
 
 module akv '../foundation/kv.bicep' = {
   name: 'keyvault-${resNameSeed}'
   params: {
     nameSeed: resNameSeed
     enableSoftDelete: enableKeyVaultSoftDelete
-    apimUaiName:  apim.outputs.apimUaiName
-    fnAppUaiName: fnAppUai.name
     secretName: '${appName}CosmosDbConnectionString'
-    secretValue: cosmosConnString
+    secretValue: getCosmosDbConnectionString.outputs.ConnectionString
+    UaiSecretReaderNames: [
+      fnAppUai.name
+      apim.outputs.apimUaiName
+    ]
   }
+  dependsOn: [
+    cosmos //It's pretty rare to need a DependsOn, but here it is... thanks listConnectionStrings
+  ]
 }
 
 // --------------API Management-----------------------
