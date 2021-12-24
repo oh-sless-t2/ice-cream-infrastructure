@@ -43,7 +43,7 @@ param AppGitRepoUrl string
 @description('Grabbing the KeyVault Connectionstring secret uri')
 var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${cosmos.outputs.connstrSecretUriWithVersion})'
 module functionApp '../foundation/functionapp.bicep' = {
-  name: 'functionApp-${appName}'
+  name: 'functionApp-${resNameSeed}'
   params: {
     appName: appName
     webAppName: webAppName
@@ -59,22 +59,25 @@ output ApplicationUrl string = functionApp.outputs.appUrl
 
 // --------------------App Insights-------------------
 module appInsights '../foundation/appinsights.bicep' = {
-  name: 'appinsights-${appName}'
+  name: 'appinsights-${resNameSeed}'
   params: {
     appName: webAppName
-    logAnalyticsId: log.outputs.id
+    logAnalyticsId: logAnalyticsResourceId
   }
 }
 output AppInsightsName string = appInsights.outputs.name
 
 // --------------------Log Analytics-------------------
-module log '../foundation/loganalytics.bicep' = {
+@description('If you have an existing log analytics workspace in this region that you prefer, set the full resourceId here')
+param centralLogAnalyticsId string = ''
+module log '../foundation/loganalytics.bicep' = if(empty(centralLogAnalyticsId)) {
   name: 'log-${resNameSeed}'
   params: {
     resNameSeed: resNameSeed
     retentionInDays: 30
   }
 }
+var logAnalyticsResourceId =  !empty(centralLogAnalyticsId) ? centralLogAnalyticsId : log.outputs.id
 
 // --------------CosmosDb-----------------------
 @description('Name of the CosmosDb Account')
@@ -115,18 +118,20 @@ module akv '../foundation/kv.bicep' = {
   params: {
     nameSeed: resNameSeed
     enableSoftDelete: enableKeyVaultSoftDelete
+    tenantId: subscription().tenantId
+  }
+}
+
+module akvAssignments '../foundation/kv-roleassignments.bicep' = {
+  name: 'roles-keyvault-${resNameSeed}'
+  params: {
+    kvName: akv.outputs.name
     UaiSecretReaderNames: [
       fnAppUai.name
       apim.outputs.apimUaiName
     ]
   }
 }
-
-
-// resource appUaiRole 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-//   name:
-//   scope: akv
-// }
 
 // --------------API Management-----------------------
 module apim '../foundation/apim.bicep' =  {
@@ -135,7 +140,7 @@ module apim '../foundation/apim.bicep' =  {
     nameSeed: resNameSeed
     AppInsightsName: appInsights.outputs.name
     sku: apiManagementSku
-    logId: log.outputs.id
+    logId: logAnalyticsResourceId
   }
 }
 output ApimName string = apim.outputs.ApimName
