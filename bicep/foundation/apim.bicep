@@ -84,7 +84,7 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!e
 
 var redisName = 'redis-${nameSeed}'
 module redis 'redis.bicep' = if(useRedisCache) {
-  name: 'redis-apim--${nameSeed}'
+  name: 'redis-apim-${nameSeed}'
   params: {
     nameSeed: nameSeed
     redisName: redisName
