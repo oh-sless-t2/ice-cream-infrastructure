@@ -30,6 +30,20 @@ Archetypes fulfill a use case without being application specifc. They integrate 
 
 These modules are totally specific to your application or enterprise function. They decide names, they provide source code, they configure empty infrastructure to something meaningful.
 
+## Benefits and Risks of this approach
+
+### Benefits
+
+Speed. Identifying common application patterns, and being able to onboard teams to a standardised infrastructure setup is a big plus.
+
+Standardisation.
+
+### Risks
+
+Teams that fork the archetype without genericising for other teams.
+
+Overfitting to specific application use cases
+
 ## The main components
 
 ```text
