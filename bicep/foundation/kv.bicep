@@ -8,8 +8,6 @@ param enableSoftDelete bool = true
 @description('Pass an array of UAI names to give the GET secret access policy')
 param UaiSecretReaderNames array
 
-param secretName string = 'AppSecret'
-param secretValue string = 'SecretSquirrel'
 
 var kvRawName = replace('kv-${nameSeed}-${uniqueString(resourceGroup().id, nameSeed)}','-','')
 var kvName = length(kvRawName) > 24 ? substring(kvRawName,0,23) : kvRawName
@@ -42,12 +40,3 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' =  {
   }
 }
 
-resource secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: secretName
-  parent: keyVault
-  properties: {
-    value: secretValue
-  }
-}
-output secretUriWithVersion string = secret.properties.secretUriWithVersion
-output secretUri string = secret.properties.secretUri

@@ -92,14 +92,16 @@ module redis 'redis.bicep' = if(useRedisCache) {
   }
 }
 
-module redisConnectionString '../helpers/CreateRedisConnectionString.bicep' = if(useRedisCache) {
-  name: 'Redis-ConnectionString'
-  params: {
-    nameOfSomethingToWaitFor: redis.name
-    redisName: redisName
-  }
-}
-//var redisconnectionstring = '${redis.outputs.hostName}:${redis.outputs.sslPort},password=${listKeys('Microsoft.Cache/redis/${redisName}','2020-12-01').primaryKey},ssl=True,abortConnect=False'
+// module redisConnectionString '../helpers/CreateRedisConnectionString.bicep' = if(useRedisCache) {
+//   name: 'Redis-ConnectionString'
+//   params: {
+//     nameOfSomethingToWaitFor: redis.name
+//     redisName: redisName
+//   }
+// }
+
+
+var redisconnectionstring = '${redis.outputs.hostName}:${redis.outputs.sslPort},password=${listKeys('Microsoft.Cache/redis/${redisName}','2020-12-01').primaryKey},ssl=True,abortConnect=False'
 
 resource apimcache 'Microsoft.ApiManagement/service/caches@2021-04-01-preview' = if(useRedisCache) {
   name: resourceGroup().location
@@ -108,7 +110,7 @@ resource apimcache 'Microsoft.ApiManagement/service/caches@2021-04-01-preview' =
     useFromLocation: resourceGroup().location
     description: redis.outputs.hostName
     resourceId: redis.outputs.redisfullresourceid
-    connectionString: redisConnectionString.outputs.connectionstring
+    connectionString: redisconnectionstring
   }
 }
 

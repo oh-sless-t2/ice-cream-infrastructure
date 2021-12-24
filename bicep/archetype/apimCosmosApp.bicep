@@ -41,7 +41,7 @@ resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
 param AppGitRepoUrl string
 
 @description('Grabbing the KeyVault Connectionstring secret uri')
-var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${akv.outputs.secretUriWithVersion})'
+var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${cosmos.outputs.connstrSecretUriWithVersion})'
 module functionApp '../foundation/functionapp.bicep' = {
   name: 'functionApp-${appName}'
   params: {
@@ -109,14 +109,14 @@ module cosmos '../foundation/cosmos-sql.bicep' = {
 }
 
 // --------------Key Vault-----------------------
-@description('Getting the CosmosDb connection string for secure storage in KeyVault as ListConnectionString requires a value that can be calculated at the start of the deployment')
-module getCosmosDbConnectionString '../helpers/GetConnectionString.bicep' = {
-  name: 'CosmosDb-GetConnectionString'
-  params: {
-    nameOfSomethingToWaitFor: cosmos.outputs.accountId
-    resourceId: 'Microsoft.DocumentDb/databaseAccounts/${cleanCosmosDbName}'
-  }
-}
+// @description('Getting the CosmosDb connection string for secure storage in KeyVault as ListConnectionString requires a value that can be calculated at the start of the deployment')
+// module getCosmosDbConnectionString '../helpers/GetConnectionString.bicep' = {
+//   name: 'CosmosDb-GetConnectionString'
+//   params: {
+//     nameOfSomethingToWaitFor: cosmos.outputs.accountId
+//     resourceId: 'Microsoft.DocumentDb/databaseAccounts/${cleanCosmosDbName}'
+//   }
+// }
 
 //var cosmosConnString = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${cosmosRef.id}', '2015-04-08').connectionStrings).connectionString
 
@@ -125,16 +125,11 @@ module akv '../foundation/kv.bicep' = {
   params: {
     nameSeed: resNameSeed
     enableSoftDelete: enableKeyVaultSoftDelete
-    secretName: '${appName}CosmosDbConnectionString'
-    secretValue: getCosmosDbConnectionString.outputs.ConnectionString
     UaiSecretReaderNames: [
       fnAppUai.name
       apim.outputs.apimUaiName
     ]
   }
-  dependsOn: [
-    cosmos //It's pretty rare to need a DependsOn, but here it is... thanks listConnectionStrings
-  ]
 }
 
 // --------------API Management-----------------------
