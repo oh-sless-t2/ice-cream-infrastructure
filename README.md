@@ -6,6 +6,10 @@ The point of this repo is to productionise a common application pattern.
 
 Through creating the "best" use of Bicep Modules, an archetype has been created that can easily be leveraged by other similar applications.
 
+## View of the bicep modules
+
+![bicep module view](bicepSchematic.png)
+
 ## The layers
 
 The modules have been structured in 3 layers
@@ -25,10 +29,6 @@ Archetypes fulfill a use case without being application specifc. They integrate 
 ### Application
 
 These modules are totally specific to your application or enterprise function. They decide names, they provide source code, they configure empty infrastructure to something meaningful.
-
-## View of the bicep modules
-
-![bicep module view](bicepSchematic.png)
 
 ## The main components
 
