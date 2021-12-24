@@ -1,5 +1,9 @@
 # ice-cream-infrastructure
 
+## View of the bicep modules
+
+![bicep module view](bicepSchematic.png)
+
 ## The main components
 
 ```text
