@@ -80,10 +80,9 @@ resource functionApp 'Microsoft.Web/sites@2021-02-01' = {
 output appUrl string = functionApp.properties.defaultHostName
 output appName string = functionApp.name
 
-
 var deploymentSlotName = 'staging'
 resource slot 'Microsoft.Web/sites/slots@2021-02-01' = {
-  name: deploymentSlotName 
+  name: deploymentSlotName
   location: resourceGroup().location
   properties:{
     siteConfig: siteConfig
@@ -97,7 +96,7 @@ resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
   name: fnAppIdentityName
 }
 
-resource webAppConfig 'Microsoft.Web/sites/config@2019-08-01' = { 
+resource webAppConfig 'Microsoft.Web/sites/config@2019-08-01' = {
   parent: functionApp
   name: 'web'
   properties: {
@@ -124,12 +123,25 @@ resource webAppLogging 'Microsoft.Web/sites/config@2021-02-01' = {
   }
 }
 
-resource codeDeploy 'Microsoft.Web/sites/sourcecontrols@2021-01-15' = {
+param repoUrl string = ''
+param repoBranchProduction string = 'main'
+resource codeDeploy 'Microsoft.Web/sites/sourcecontrols@2021-01-15' = if (!empty(repoUrl)) {
   parent: functionApp
   name: 'web'
   properties: {
-    repoUrl:'https://github.com/oh-sless-t2/ice-cream-rating-api'
-    branch: 'main'
+    repoUrl: repoUrl
+    branch: repoBranchProduction
+    isManualIntegration: true
+  }
+}
+
+param repoBranchStaging string = ''
+resource slotCodeDeploy 'Microsoft.Web/sites/slots/sourcecontrols@2021-02-01' = if (!empty(repoUrl) && !empty(repoBranchStaging)) {
+  parent: slot
+  name: 'web'
+  properties: {
+    repoUrl: repoUrl
+    branch: repoBranchStaging
     isManualIntegration: true
   }
 }
@@ -143,12 +155,11 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
 }
 
-
 resource hostingPlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: hostingPlanName
   location: resourceGroup().location
   sku: {
-    name: 'Y1' 
+    name: 'Y1'
     tier: 'Dynamic'
   }
 }
