@@ -96,7 +96,7 @@ module redis 'redis.bicep' = if(useRedisCache) {
 module apimRedisCacheConfig 'apim-cacheconfig.bicep' = if(useRedisCache) {
   name: 'cacheconfig-apim-${nameSeed}'
   params: {
-    redisName: redis.outputs.name
+    redisName: useRedisCache ? redis.outputs.name : ''
     apimName: apim.name
   }
 }

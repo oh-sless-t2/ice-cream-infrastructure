@@ -1,5 +1,8 @@
 /*
   A single function app that uses CosmosDb, fronted by APIM.
+  Key Vault for secrets management
+  LoadTesting and Web Tests are configured
+
   As an Archetype there is no specific application information, just the right configuration for a standard App deployment.
 */
 
@@ -43,15 +46,23 @@ param AppGitRepoUrl string
 param AppGitRepoProdBranch string = 'main'
 param AppGitRepoStagingBranch string = ''
 
+param AppSettings array = []
+
 @description('Grabbing the KeyVault Connectionstring secret uri')
-var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${cosmos.outputs.connstrSecretUriWithVersion})'
+//var kv_cosmosconnectionstring = '@Microsoft.KeyVault(SecretUri=${cosmos.outputs.connstrSecretUriWithVersion})'
+var CosmosAppSettings = [
+  {
+    name: 'COSMOS_CONNECTION_STRING'
+    value: '@Microsoft.KeyVault(SecretUri=${cosmos.outputs.connstrSecretUriWithVersion})'
+  }
+]
 module functionApp '../foundation/functionapp.bicep' = {
   name: 'functionApp-${resNameSeed}'
   params: {
     appName: appName
     webAppName: webAppName
     AppInsightsName: appInsights.outputs.name
-    CosmosConnectionString: kv_cosmosconnectionstring
+    additionalAppSettings: length(AppSettings) == 0 ? CosmosAppSettings : concat(AppSettings,CosmosAppSettings)
     restrictTrafficToJustAPIM: restrictTrafficToJustAPIM
     fnAppIdentityName: fnAppUai.name
     repoUrl: AppGitRepoUrl

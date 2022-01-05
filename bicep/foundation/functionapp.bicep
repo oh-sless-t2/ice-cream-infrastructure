@@ -13,42 +13,41 @@ param WorkerRuntime string = 'dotnet'
 param RuntimeVersion string = '~4'
 
 param AppInsightsName string
-param CosmosConnectionString string
+param additionalAppSettings array = []
 param fnAppIdentityName string = 'id-app-${appName}-${uniqueString(resourceGroup().id, appName)}'
 
 resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = {
   name: AppInsightsName
 }
 
-var storageAccountName = substring(toLower('stor${appName}${uniqueString(resourceGroup().id, appName)}'),0,23)
+var storageAccountRawName = toLower('stor${appName}${uniqueString(resourceGroup().id, appName)}')
+var storageAccountName = length(storageAccountRawName) > 24 ? substring(storageAccountRawName,0,23) : storageAccountRawName
+
+var coreAppSettings = [
+  {
+    'name': 'APPINSIGHTS_INSTRUMENTATIONKEY'
+    'value': AppInsights.properties.InstrumentationKey
+  }
+  {
+    name: 'AzureWebJobsStorage'
+    value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+  }
+  {
+    'name': 'FUNCTIONS_EXTENSION_VERSION'
+    'value': RuntimeVersion
+  }
+  {
+    'name': 'FUNCTIONS_WORKER_RUNTIME'
+    'value': WorkerRuntime
+  }
+  {
+    name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
+    value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
+  }
+]
 
 var siteConfig = {
-  appSettings: [
-    {
-      'name': 'APPINSIGHTS_INSTRUMENTATIONKEY'
-      'value': AppInsights.properties.InstrumentationKey
-    }
-    {
-      name: 'AzureWebJobsStorage'
-      value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
-    }
-    {
-      'name': 'FUNCTIONS_EXTENSION_VERSION'
-      'value': RuntimeVersion
-    }
-    {
-      'name': 'FUNCTIONS_WORKER_RUNTIME'
-      'value': WorkerRuntime
-    }
-    {
-      name: 'COSMOS_CONNECTION_STRING'
-      value: CosmosConnectionString
-    }
-    {
-      name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-      value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
-    }
-  ]
+  appSettings: length(additionalAppSettings) == 0 ? coreAppSettings : concat(coreAppSettings,additionalAppSettings)
   ipSecurityRestrictions: restrictTrafficToJustAPIM ? [
     {
       priority: 200
