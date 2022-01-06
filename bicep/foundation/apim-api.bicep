@@ -68,6 +68,7 @@ resource apimService 'Microsoft.ApiManagement/service/apis@2021-04-01-preview' =
     subscriptionRequired: apimSubscriptionRequired
   }
 }
+output serviceName string = apimService.name
 
 resource diags 'Microsoft.ApiManagement/service/apis/diagnostics@2021-04-01-preview' = {
   name: 'applicationinsights'

@@ -57,7 +57,7 @@ var CosmosAppSettings = [
   }
 ]
 module functionApp '../foundation/functionapp.bicep' = {
-  name: 'functionApp-${resNameSeed}'
+  name: 'functionApp-${appName}-${resNameSeed}'
   params: {
     appName: appName
     webAppName: webAppName
