@@ -11,13 +11,14 @@ param loadTestOwnerUser string = ''
 @description('The object id of a Service Principal that will be used to create/run load tests')
 param loadTestContributorSP string = ''
 
-//disable-next-line BCP081
+#disable-next-line BCP081
 resource loadtest 'Microsoft.LoadTestService/loadtests@2021-09-01-preview' = {
   name: loadtestname
   location: location
   tags: {
     testTargetResourceId: LoadTestTargetUrl
   }
+
 }
 
 var LoadTestOwnerRoleId = resourceId('Microsoft.Authorization/roleDefinitions', '45bb0b16-2f0c-4e78-afaa-a07599b003f6')
@@ -56,32 +57,5 @@ resource UaiContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2
     principalId: loadTestRunner.properties.principalId
     roleDefinitionId: LoadTestContributorRoleId
     principalType: 'ServicePrincipal'
-  }
-}
-
-resource prepareJmx 'Microsoft.Resources/deploymentScripts@2020-10-01' = if(false)  {
-  name: 'createLoadTestJmx'
-  location: resourceGroup().location
-  kind: 'AzurePowerShell'
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${loadTestRunner.id}': {}
-    }
-  }
-  properties: {
-    forceUpdateTag: '1'
-    azPowerShellVersion: '6.4'
-    timeout: 'PT30M'
-    arguments: '-url \\"${LoadTestTargetUrl}\\"'
-    scriptContent: '''
-      param([string] $url)
-      $output = \'Hello {0}\' -f $url
-      Write-Output $output
-      $DeploymentScriptOutputs = @{}
-      $DeploymentScriptOutputs[\'text\'] = $output
-    '''
-    cleanupPreference: 'OnSuccess'
-    retentionInterval: 'P1D'
   }
 }

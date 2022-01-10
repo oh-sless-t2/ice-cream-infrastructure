@@ -23,6 +23,9 @@ param freeTier bool = false
 param AppIdentityName string = ''
 param AppIdentityRG string = resourceGroup().name //In the next version of Bicep we'll be able to pass resources between modules - so Name/Rg will get refactored to 1 param
 
+@description('The principalId of a user who can also be provided RBAC access to CosmosDb')
+param UserRolePrincipalId string = ''
+
 resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = if(!empty(AppIdentityName)) {
   name: AppIdentityName
   scope:  resourceGroup(AppIdentityRG)
@@ -52,76 +55,76 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-07-01-previ
       }
     ]
   }
+
+  resource cosmosDbDatabase 'sqlDatabases' = {
+    name: databaseName
+    properties: {
+      resource: {
+        id: databaseName
+      }
+    }
+
+    resource container 'containers' = {
+      name: collectionName
+      properties: {
+        resource: {
+          id: collectionName
+          partitionKey: {
+            paths: [
+              '/${partitionkey}'
+            ]
+            kind: 'Hash'
+          }
+        }
+      }
+    }
+  }
+
+  resource cosmosReadWriteRoleDefinition 'sqlRoleDefinitions' = {
+    name: guid(cosmosDbAccount.name, 'ReadWriteRole')
+    properties: {
+      assignableScopes: [
+        cosmosDbAccount.id
+      ]
+      permissions: [
+        {
+          dataActions: [
+            'Microsoft.DocumentDB/databaseAccounts/readMetadata'
+            'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
+            'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
+          ]
+          notDataActions: []
+        }
+      ]
+      roleName: 'Reader Writer'
+      type: 'CustomRole'
+    }
+  }
+
+  //REF: https://joonasw.net/view/access-data-in-cosmos-db-with-managed-identities
+  resource cosmosReadWriteAppAssignment 'sqlRoleAssignments' = if(!empty(AppIdentityName)) {
+    name: guid(cosmosDbAccount.name, 'ReadWriteRole', 'App')
+    properties: {
+      principalId: fnAppUai.properties.principalId
+      roleDefinitionId: cosmosReadWriteRoleDefinition.id
+      scope: cosmosDbAccount.id
+    }
+  }
+
+  resource userRole 'sqlRoleAssignments' = if (!empty(UserRolePrincipalId)) {
+    name: guid(cosmosReadWriteRoleDefinition.id, UserRolePrincipalId, cosmosDbAccount.id)
+    properties: {
+      principalId: UserRolePrincipalId
+      roleDefinitionId: cosmosReadWriteRoleDefinition.id
+      scope: cosmosDbAccount.id
+    }
+  }
 }
 output databaseAccountId string = cosmosDbAccount.id
-
-resource cosmosDbDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-07-01-preview' = {
-  parent: cosmosDbAccount
-  name: databaseName
-  properties: {
-    resource: {
-      id: databaseName
-    }
-  }
-}
-
-resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-01-15' = {
-  parent: cosmosDbDatabase
-  name: collectionName
-  properties: {
-    resource: {
-      id: collectionName
-      partitionKey: {
-        paths: [
-          '/${partitionkey}'
-        ]
-        kind: 'Hash'
-      }
-    }
-  }
-}
-
-output accountId string = cosmosDbDatabase.id
-//output connstr string = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${databaseAccountName}', '2015-04-08').connectionStrings).connectionString
+output documentEndpoint string = cosmosDbAccount.properties.documentEndpoint
 output accountName string = cosmosDbAccount.name
 
-var readWriteRoleDefinitionId = guid(cosmosDbAccount.name, 'ReadWriteRole')
-resource cosmosReadWriteRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-03-01-preview' = {
-  name: readWriteRoleDefinitionId
-  parent: cosmosDbAccount
-  properties: {
-    assignableScopes: [
-      cosmosDbAccount.id
-    ]
-    permissions: [
-      {
-        dataActions: [
-          'Microsoft.DocumentDB/databaseAccounts/readMetadata'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
-          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
-        ]
-        notDataActions: []
-      }
-    ]
-    roleName: 'Reader Writer'
-    type: 'CustomRole'
-  }
-}
-
-//REF: https://joonasw.net/view/access-data-in-cosmos-db-with-managed-identities
-var readWriteRoleAppAssignmentId  = guid(cosmosDbAccount.name, 'ReadWriteRole', 'App')
-
-//use the output readWriteRoleAppAssignmentId in your calling module with something like this.
-resource cosmosReadWriteAppAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2021-03-01-preview' = if(!empty(AppIdentityName)) {
-  name: readWriteRoleAppAssignmentId
-  parent: cosmosDbAccount
-  properties: {
-    principalId: fnAppUai.properties.principalId
-    roleDefinitionId: cosmosReadWriteRoleDefinition.id
-    scope: cosmosDbAccount.id
-  }
-}
-
+//KeyVault - Adding ConnectionString as secret
 param keyvaultName string = ''
 param keyvaultConnectionStringSecretName string = ''
 
