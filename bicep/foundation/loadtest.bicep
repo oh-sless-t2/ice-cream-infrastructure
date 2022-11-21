@@ -24,7 +24,7 @@ resource loadtest 'Microsoft.LoadTestService/loadtests@2021-09-01-preview' = {
 var LoadTestOwnerRoleId = resourceId('Microsoft.Authorization/roleDefinitions', '45bb0b16-2f0c-4e78-afaa-a07599b003f6')
 resource loadTestOwnerAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = if(!empty(loadTestOwnerUser))  {
   scope: loadtest
-  name: '${guid(loadtestname, LoadTestOwnerRoleId, loadTestOwnerUser)}'
+  name: guid(loadtestname, LoadTestOwnerRoleId, loadTestOwnerUser)
   properties: {
     principalId: loadTestOwnerUser
     roleDefinitionId: LoadTestOwnerRoleId
@@ -35,7 +35,7 @@ resource loadTestOwnerAssignment 'Microsoft.Authorization/roleAssignments@2020-0
 var LoadTestContributorRoleId = resourceId('Microsoft.Authorization/roleDefinitions', '749a398d-560b-491b-bb21-08924219302e')
 resource loadTestContribAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' =  if(!empty(loadTestContributorSP)) {
   scope: loadtest
-  name: '${guid(loadtestname, LoadTestContributorRoleId, loadTestContributorSP)}'
+  name: guid(loadtestname, LoadTestContributorRoleId, loadTestContributorSP)
   properties: {
     principalId: loadTestContributorSP
     roleDefinitionId: LoadTestContributorRoleId
@@ -47,12 +47,12 @@ resource loadTestContribAssignment 'Microsoft.Authorization/roleAssignments@2020
 param UaiRunnerName string = 'LoadTestHelper'
 resource loadTestRunner 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: UaiRunnerName
-  location: resourceGroup().location
+  location: location
 }
 
 resource UaiContributorRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
   scope: loadtest
-  name: '${guid(loadtestname, LoadTestContributorRoleId, UaiRunnerName)}'
+  name: guid(loadtestname, LoadTestContributorRoleId, UaiRunnerName)
   properties: {
     principalId: loadTestRunner.properties.principalId
     roleDefinitionId: LoadTestContributorRoleId

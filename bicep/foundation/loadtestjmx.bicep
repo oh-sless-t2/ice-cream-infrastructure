@@ -3,10 +3,11 @@ param LoadTestResourceName string = 'ratings-test'
 param LoadTestName string = 'GetProducts'
 param utcValue string = utcNow()
 param JmxBaseFileUrl string = 'https://github.com/Gordonby/Snippets/blob/master/Jmeter/SimpleGetBase.xml?raw=true'
+param location string =resourceGroup().location
 
 resource AddLoadTestFromJmx 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'AddLoadTest-${LoadTestName}'
-  location: resourceGroup().location
+  location: location
   kind: 'AzurePowerShell'
   identity: {
     type: 'UserAssigned'

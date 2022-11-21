@@ -2,6 +2,7 @@
 param AppInsightsName string
 
 param Name string
+param location string = resourceGroup().location
 
 @description('URL to test')
 param WebTestUrl string
@@ -14,7 +15,7 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = {
 
 resource urlTest 'Microsoft.Insights/webtests@2018-05-01-preview' = {
   name: Name
-  location: resourceGroup().location
+  location: location
   kind: 'ping'
     tags: {
     'hidden-link:${AppInsights.id}': 'Resource'

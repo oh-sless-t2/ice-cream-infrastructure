@@ -4,9 +4,11 @@ param nameSeed string
 
 param redisName string =  'redis-${nameSeed}'
 
+param location string =resourceGroup().location
+
 resource redis 'Microsoft.Cache/redis@2020-12-01' = {
   name:redisName
-  location: resourceGroup().location
+  location: location
   properties: {
     sku: {
       capacity: 0

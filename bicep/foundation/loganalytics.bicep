@@ -4,11 +4,13 @@ param resNameSeed string
 @description('The Log Analytics retention period')
 param retentionInDays int = 30
 
+param location string =resourceGroup().location
+
 var log_name = 'log-${resNameSeed}'
 
 resource log 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   name: log_name
-  location: resourceGroup().location
+  location: location
   properties: {
     retentionInDays: retentionInDays
   }

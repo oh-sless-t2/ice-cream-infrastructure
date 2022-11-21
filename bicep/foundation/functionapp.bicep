@@ -1,6 +1,7 @@
 @description('The name seed for your application. Check outputs for the actual name and url')
 param appName string
 param webAppName string = 'app-${appName}-${uniqueString(resourceGroup().id, appName)}'
+param location string =resourceGroup().location
 
 @description('Name of the web app host plan')
 param hostingPlanName string = 'plan-${appName}'
@@ -25,20 +26,20 @@ var storageAccountName = length(storageAccountRawName) > 24 ? substring(storageA
 
 var coreAppSettings = [
   {
-    'name': 'APPINSIGHTS_INSTRUMENTATIONKEY'
-    'value': AppInsights.properties.InstrumentationKey
+    name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+    value: AppInsights.properties.InstrumentationKey
   }
   {
     name: 'AzureWebJobsStorage'
     value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value}'
   }
   {
-    'name': 'FUNCTIONS_EXTENSION_VERSION'
-    'value': RuntimeVersion
+    name: 'FUNCTIONS_EXTENSION_VERSION'
+    value: RuntimeVersion
   }
   {
-    'name': 'FUNCTIONS_WORKER_RUNTIME'
-    'value': WorkerRuntime
+    name: 'FUNCTIONS_WORKER_RUNTIME'
+    value: WorkerRuntime
   }
   {
     name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
@@ -60,7 +61,7 @@ var siteConfig = {
 
 resource functionApp 'Microsoft.Web/sites@2021-02-01' = {
   name: webAppName
-  location: resourceGroup().location
+  location: location
   kind: 'functionapp'
   identity: {
     type: 'UserAssigned'
@@ -82,7 +83,7 @@ output appName string = functionApp.name
 var deploymentSlotName = 'staging'
 resource slot 'Microsoft.Web/sites/slots@2021-02-01' = {
   name: deploymentSlotName
-  location: resourceGroup().location
+  location: location
   properties:{
     siteConfig: siteConfig
     enabled: true
@@ -147,7 +148,7 @@ resource slotCodeDeploy 'Microsoft.Web/sites/slots/sourcecontrols@2021-02-01' = 
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: storageAccountName
-  location: resourceGroup().location
+  location: location
   kind: 'StorageV2'
   sku: {
     name: 'Standard_LRS'
@@ -156,7 +157,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
 
 resource hostingPlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: hostingPlanName
-  location: resourceGroup().location
+  location: location
   sku: {
     name: 'Y1'
     tier: 'Dynamic'

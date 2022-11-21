@@ -13,6 +13,8 @@ param apimProductNames array = [
 @description('Enforces requirement for an api subscription key')
 param requireSubscriptionForApis bool = true
 
+param location string = resourceGroup().location
+
 @description('Creating a proper reference to APIM')
 resource apim 'Microsoft.ApiManagement/service@2021-01-01-preview' existing = {
   name: apimName
@@ -35,6 +37,7 @@ module userApi '../foundation/apim-api.bicep' = {
   name: 'userApi-apim-${resNameSeed}'
   params: {
     apimName: apimName
+    location: location
     apimLoggerId: apimLoggerId
     AppInsightsName: appInsightsName
     servicename: 'Users'
@@ -64,6 +67,7 @@ module productApi '../foundation/apim-api.bicep' = {
   name: 'productApi-apim-${resNameSeed}'
   params: {
     apimName: apimName
+    location: location
     apimLoggerId: apimLoggerId
     AppInsightsName: appInsightsName
     servicename: 'Product'
