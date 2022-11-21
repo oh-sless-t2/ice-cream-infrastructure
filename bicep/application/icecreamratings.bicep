@@ -18,6 +18,8 @@ param cosmosDbCollecionName string = appName
 @description('The collection partitionkey')
 param cosmosDbPartitionKey string = 'productId'
 
+param location string =resourceGroup().location
+
 @description('Logic to leverage environment protection like SoftDelete')
 var environmentProtectionAndBackup = environment == 'prod'
 
@@ -35,6 +37,7 @@ module serverlessapp '../archetype/apimCosmosApp.bicep' = {
     cosmosDbCollectionName: cosmosDbCollecionName
     cosmosDbPartitionKey: cosmosDbPartitionKey
     restrictTrafficToJustAPIM: environment != 'dev'
+    location: location
   }
 }
 
@@ -45,6 +48,7 @@ module webTest '../foundation/appinsightswebtest.bicep' = if(environment == 'dev
     Name: appName
     AppInsightsName: serverlessapp.outputs.AppInsightsName
     WebTestUrl:  'https://${ serverlessapp.outputs.ApplicationUrl}/api/GetRatings/cc20a6fb-a91f-4192-874d-132493685376'
+    location: location
   }
 }
 
@@ -57,5 +61,6 @@ module apis 'icecreamratings-apimspec.bicep' = {
     appInsightsName: serverlessapp.outputs.AppInsightsName
     apimLoggerId: serverlessapp.outputs.ApimLoggerId
     ratingsApiBaseUrl: 'https://${ serverlessapp.outputs.ApplicationUrl}/api/'
+    location: location
   }
 }

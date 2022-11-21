@@ -3,6 +3,7 @@
 @maxLength(44)
 param databaseAccountName string
 
+param location string = resourceGroup().location
 param databaseName string
 param collectionName string
 param partitionkey string
@@ -34,7 +35,7 @@ resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-07-01-preview' = {
   kind: 'GlobalDocumentDB'
   name: databaseAccountName
-  location: resourceGroup().location
+  location: location
   properties: {
     databaseAccountOfferType: 'Standard'
     capabilities: capacityMode=='Serverless' ? [
@@ -49,7 +50,7 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-07-01-previ
     // }
     locations: [
       {
-        locationName: '${resourceGroup().location}'
+        locationName: location
         failoverPriority:0
         isZoneRedundant: zoneRedundant
       }
@@ -139,5 +140,6 @@ resource secret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = if (!empty(keyv
     value: first(cosmosDbAccount.listConnectionStrings().connectionStrings).connectionString
   }
 }
+
 output connstrSecretUriWithVersion string = secret.properties.secretUriWithVersion
 output connstrSecretUri string = secret.properties.secretUri

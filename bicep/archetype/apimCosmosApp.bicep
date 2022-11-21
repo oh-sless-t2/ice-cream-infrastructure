@@ -26,6 +26,8 @@ param restrictTrafficToJustAPIM bool = false
 @description('Soft Delete protects your Vault contents and should be used for serious environments')
 param enableKeyVaultSoftDelete bool = true
 
+param location string = resourceGroup().location
+
 @description('Needs to be unique as ends up as a public endpoint')
 var webAppName = 'app-${appName}-${uniqueString(resourceGroup().id, appName)}'
 
@@ -36,7 +38,7 @@ param fnAppIdentityName string = 'id-app-${appName}-${uniqueString(resourceGroup
 
 resource fnAppUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: fnAppIdentityName
-  location: resourceGroup().location
+  location: location
 }
 
 // --------------------Function App-------------------
@@ -61,6 +63,7 @@ module functionApp '../foundation/functionapp.bicep' = {
   params: {
     appName: appName
     webAppName: webAppName
+    location: location
     AppInsightsName: appInsights.outputs.name
     additionalAppSettings: length(AppSettings) == 0 ? CosmosAppSettings : concat(AppSettings,CosmosAppSettings)
     restrictTrafficToJustAPIM: restrictTrafficToJustAPIM
@@ -79,6 +82,7 @@ module appInsights '../foundation/appinsights.bicep' = {
   params: {
     appName: webAppName
     logAnalyticsId: logAnalyticsResourceId
+    location: location
   }
 }
 output AppInsightsName string = appInsights.outputs.name
@@ -91,6 +95,7 @@ module log '../foundation/loganalytics.bicep' = if(empty(centralLogAnalyticsId))
   params: {
     resNameSeed: resNameSeed
     retentionInDays: 30
+    location: location
   }
 }
 var logAnalyticsResourceId =  !empty(centralLogAnalyticsId) ? centralLogAnalyticsId : log.outputs.id
@@ -117,6 +122,7 @@ module cosmos '../foundation/cosmos-sql.bicep' = {
   scope: resourceGroup(cosmosDbResourceGroupName)
   params: {
     databaseAccountName: cleanCosmosDbName
+    location: location
     databaseName: cosmosDbDatabaseName
     collectionName: cosmosDbCollectionName
     partitionkey: cosmosDbPartitionKey
@@ -135,6 +141,7 @@ module akv '../foundation/kv.bicep' = {
     nameSeed: resNameSeed
     enableSoftDelete: enableKeyVaultSoftDelete
     tenantId: subscription().tenantId
+    location: location
   }
 }
 
@@ -154,6 +161,7 @@ module apim '../foundation/apim.bicep' =  {
   name: 'apim-${resNameSeed}'
   params: {
     nameSeed: resNameSeed
+    location: location
     AppInsightsName: appInsights.outputs.name
     sku: apiManagementSku
     logId: logAnalyticsResourceId
@@ -170,7 +178,7 @@ module loadtest '../foundation/loadtest.bicep' = if(createLoadTests) {
   params: {
     loadtestname: '${appName}-test'
     LoadTestTargetUrl: functionApp.outputs.appUrl
-    location: 'eastus' //public preview region
+    location: location
     loadTestOwnerUser: loadTestOwnerObjectId
   }
 }

@@ -6,6 +6,13 @@ The point of this repo is to productionise a common application pattern.
 
 Through creating the "best" use of Bicep Modules, an archetype has been created that can easily be leveraged by other similar applications.
 
+### Quickstart
+
+```bash
+RG="yourResourceGroup"
+az deployment group create -g $RG -u https://github.com/Gordonby/AzureBicepServerlessAppStack/blob/main/bicep/application/icecreamratings.json
+```
+
 ## View of the bicep modules
 
 ![bicep module view](bicepSchematic.png)
@@ -24,7 +31,7 @@ Foundational bicep modules are opinionated in the configuration that best suits 
 
 ### Archetype
 
-Archetypes fulfill a use case without being application specifc. They integrate disparate Azure services that should be leveraged together to create a new module that is simple to deploy and easy for your application teams to leverage.
+Archetypes fulfils a use case without being application specific. They integrate disparate Azure services that should be leveraged together to create a new module that is simple to deploy and easy for your application teams to leverage.
 
 ### Application
 

@@ -89,6 +89,7 @@ module redis 'redis.bicep' = if(useRedisCache) {
     nameSeed: nameSeed
     redisName: redisName
     logId: logId
+    location: location
   }
 }
 
@@ -98,6 +99,7 @@ module apimRedisCacheConfig 'apim-cacheconfig.bicep' = if(useRedisCache) {
   params: {
     redisName: useRedisCache ? redis.outputs.name : ''
     apimName: apim.name
+    location: location
   }
 }
 

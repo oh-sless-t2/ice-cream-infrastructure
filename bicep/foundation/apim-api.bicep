@@ -7,6 +7,7 @@ param baseUrl string
 param servicename string
 param serviceApimPath string
 param serviceDisplayName string = servicename
+param location string = resourceGroup().location
 param apimSubscriptionRequired bool = false
 param apimLoggerId string
 param apis array = [
@@ -37,7 +38,7 @@ resource ApimLogger 'Microsoft.ApiManagement/service/loggers@2021-04-01-preview'
     loggerType: 'applicationInsights'
     resourceId: AppInsights.id
     credentials: {
-      'instrumentationKey': AppInsights.properties.InstrumentationKey
+      instrumentationKey: AppInsights.properties.InstrumentationKey
     }
     description: 'Application Insights telemetry from APIs'
   }
@@ -93,6 +94,7 @@ module webTest '../foundation/appinsightswebtest.bicep' = [for api in apis: if(!
     Name: '${api.name}-GetUsers-Direct'
     AppInsightsName: AppInsights.name
     WebTestUrl: '${baseUrl}${api.urlTemplate}'
+    location: location
   }
 }]
 
