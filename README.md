@@ -9,8 +9,9 @@ Through creating the "best" use of Bicep Modules, an archetype has been created 
 ### Quickstart
 
 ```bash
-RG="yourResourceGroup"
-az deployment group create -g $RG -u https://github.com/Gordonby/AzureBicepServerlessAppStack/blob/main/bicep/application/icecreamratings.json
+RG="serverlessApim"
+az group create -g $RG -l westeurope
+az deployment group create -g $RG -u https://raw.githubusercontent.com/Gordonby/AzureBicepServerlessAppStack/main/bicep/application/icecreamratings.json
 ```
 
 ## View of the bicep modules
