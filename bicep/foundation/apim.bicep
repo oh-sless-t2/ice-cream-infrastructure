@@ -34,19 +34,22 @@ param availabilityZones array = [
   '3'
 ]
 
+@description('Log Analytics ResourceId')
+param logId string
+
 param AppInsightsName string = ''
 
 
 var apiManagementServiceName = 'apim-${nameSeed}-${substring(sku,0,3)}-${uniqueString(resourceGroup().id, nameSeed)}'
 
-resource apim 'Microsoft.ApiManagement/service@2021-04-01-preview' = {
+resource apim 'Microsoft.ApiManagement/service@2022-09-01-preview' = {
   name: apiManagementServiceName
   location: location
   sku: {
     name: sku
     capacity: sku=='Consumption' ? 0 :  skuCount
   }
-  zones: ((length(availabilityZones) == 0 || sku!='Premium') ? json('null') : availabilityZones)
+  zones: ((length(availabilityZones) == 0 || sku!='Premium') ? null : availabilityZones)
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
@@ -60,15 +63,16 @@ resource apim 'Microsoft.ApiManagement/service@2021-04-01-preview' = {
 }
 output ApimName string = apim.name
 
-resource apimPolicy 'Microsoft.ApiManagement/service/policies@2019-12-01' = {
-  name: '${apim.name}/policy'
+resource apimPolicy 'Microsoft.ApiManagement/service/policies@2022-09-01-preview' = {
+  name: 'policy'
+  parent: apim
   properties:{
     format: 'rawxml'
     value: '<policies><inbound /><backend><forward-request /></backend><outbound /><on-error /></policies>'
   }
 }
 
-resource apiUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+resource apiUai 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: 'id-apim-${nameSeed}'
   location: location
 }
@@ -79,27 +83,32 @@ resource AppInsights 'Microsoft.Insights/components@2020-02-02' existing = if(!e
   name: AppInsightsName
 }
 
+var redisName = 'redis-${nameSeed}'
 module redis 'redis.bicep' = if(useRedisCache) {
-  name: 'apim-redis'
+  name: 'redis-apim-${nameSeed}'
   params: {
     nameSeed: nameSeed
+    redisName: redisName
+    logId: logId
+    location: location
   }
 }
 
-resource apimcache 'Microsoft.ApiManagement/service/caches@2021-04-01-preview' = if(useRedisCache) {
-  name: resourceGroup().location
-  parent: apim
-  properties: {
-    connectionString: redis.outputs.redisconnectionstring
-    useFromLocation: resourceGroup().location
-    description: redis.outputs.redishostnmame
-    resourceId: redis.outputs.redisfullresourceid
+@description('We need to use a module for the config to ensure both Redis and APIM have been created to avoid both prematurely invoking ListKeys, and to avoid using outputs for keys/secrets')
+module apimRedisCacheConfig 'apim-cacheconfig.bicep' = if(useRedisCache) {
+  name: 'cacheconfig-apim-${nameSeed}'
+  params: {
+    redisName: useRedisCache ? redis.outputs.name : ''
+    apimName: apim.name
+    location: location
   }
 }
 
 // Create Logger and link logger
-resource apimLogger 'Microsoft.ApiManagement/service/loggers@2019-12-01' = {
-  name: '${apim.name}/${apim.name}-logger'
+param createLogger bool = true
+resource apimLogger 'Microsoft.ApiManagement/service/loggers@2022-09-01-preview' = if(createLogger) {
+  name: '${apim.name}-logger'
+  parent: apim
   properties:{
     resourceId: AppInsights.id
     loggerType: 'applicationInsights'
@@ -109,3 +118,4 @@ resource apimLogger 'Microsoft.ApiManagement/service/loggers@2019-12-01' = {
     description: 'APIM logger for Application Insights'
   }
 }
+output loggerId string = createLogger ? apimLogger.id : ''

@@ -17,7 +17,7 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-06-15' = {
     databaseAccountOfferType: 'Standard'
     locations: [
       {
-        locationName: '${resourceGroup().location}'
+        locationName: databaseAccountLocation
         failoverPriority:0
         isZoneRedundant: false
       }
@@ -69,4 +69,5 @@ resource cosmosDbCollection 'Microsoft.DocumentDB/databaseAccounts/mongodbDataba
 }
 
 output accountId string = cosmosDbDatabase.id
-output connstr string = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${databaseAccountId}', '2015-04-08').connectionStrings).connectionString
+//output connstr string = first(listConnectionStrings('Microsoft.DocumentDb/databaseAccounts/${databaseAccountId}', '2015-04-08').connectionStrings).connectionString
+
